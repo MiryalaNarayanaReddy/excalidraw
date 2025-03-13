@@ -11,17 +11,40 @@ export const DrawingProvider = ({ children }) => {
   const [currentShape, setCurrentShape] = useState(null);
   const [startPoint, setStartPoint] = useState(null);
 
-  const [selectedFill, setSelectedFill] = useState("green")
-  const [selectedStroke, setSelectedStroke] = useState("black");
+  const [selectedFill, setSelectedFill] = useState("#ffffff")
+  const [selectedStroke, setSelectedStroke] = useState("#000000");
+
+  const [selectedStrokeWidth, setSelectedStrokeWidth] = useState(1)
+  const [selectedStrokeStyle, setSelectedStrokeStyle] = useState("solid")
+  const [selectedSloppiness, setSelectedSloppiness] = useState(0)
 
   const startDrawing = (offsetX, offsetY) => {
     setIsDrawing(true);
 
     if (mode === "pencil") {
-      setCurrentShape({ type: "pencil", points: [{ x: offsetX, y: offsetY}], stroke: selectedStroke, fill: selectedFill });
+      setCurrentShape({
+        type: "pencil",
+        points: [{ x: offsetX, y: offsetY }],
+        stroke: selectedStroke,
+        fill: selectedFill,
+        strokeWidth: selectedStrokeWidth,
+        strokeStyle: selectedStrokeStyle,
+        sloppiness: selectedSloppiness
+      });
     } else if (mode === "rectangle") {
       setStartPoint({ x: offsetX, y: offsetY });
-      setCurrentShape({ type: "rectangle", x: offsetX, y: offsetY, width: 0, height: 0, stroke: selectedStroke, fill: selectedFill });
+      setCurrentShape({
+        type: "rectangle",
+        x: offsetX,
+        y: offsetY,
+        width: 0,
+        height: 0,
+        stroke: selectedStroke,
+        fill: selectedFill,
+        roughness: selectedSloppiness,
+        strokeWidth: selectedStrokeWidth,
+        strokeStyle: selectedStrokeStyle
+      });
     }
   };
 
@@ -31,7 +54,9 @@ export const DrawingProvider = ({ children }) => {
     if (mode === "pencil") {
       setCurrentShape((prev) => ({
         ...prev,
-        points: [...prev.points, { x: offsetX, y: offsetY, stroke: selectedStroke, fill: selectedFill }],
+        points: [...prev.points,
+        { x: offsetX, y: offsetY }
+        ],
       }));
     } else if (mode === "rectangle" && startPoint) {
       setCurrentShape({
@@ -42,6 +67,9 @@ export const DrawingProvider = ({ children }) => {
         height: Math.abs(offsetY - startPoint.y),
         stroke: selectedStroke,
         fill: selectedFill,
+        roughness: selectedSloppiness,
+        strokeWidth: selectedStrokeWidth,
+        strokeStyle: selectedStrokeStyle
       });
     }
   };
@@ -58,7 +86,7 @@ export const DrawingProvider = ({ children }) => {
 
   return (
     <DrawingContext.Provider
-      value={{ history, startDrawing, draw, stopDrawing, mode, setMode, currentShape, selectedFill,setSelectedFill, selectedStroke, setSelectedStroke }}
+      value={{ history, startDrawing, draw, stopDrawing, mode, setMode, currentShape, selectedFill, setSelectedFill, selectedStroke, setSelectedStroke, selectedStrokeWidth, setSelectedStrokeWidth, selectedStrokeStyle, setSelectedStrokeStyle, selectedSloppiness, setSelectedSloppiness }}
     >
       {children}
     </DrawingContext.Provider>

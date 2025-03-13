@@ -4,6 +4,7 @@ import "./globals.css";
 import { DrawingProvider } from "@/context/DrawingContext";
 import Navbar from "@/components/Navbar"; // Fixed case issue
 import { FillColorSelection, StrokeColorSelection } from "@/components/ColorSelection";
+import { StrokeStyleSection, StrokeWidthSelection } from "@/components/StrokeSelection";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,10 @@ export default function RootLayout({
               <StrokeColorSelection />
               <div>Background</div>
               <FillColorSelection />
+              <div>Stroke Width</div>
+              <StrokeWidthSelection/>
+              <div>Stroke Style</div>
+              <StrokeStyleSection />
             </div>
           </div>
           {/* Main content */}

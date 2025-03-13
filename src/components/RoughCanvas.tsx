@@ -26,14 +26,42 @@ const RoughCanvas = () => {
 
     const drawShape = (shape) => {
       if (shape.type === "rectangle") {
+
+        let dashed = null;
+        if (shape.strokeStyle === "dashed") {
+          dashed = [10, 10]
+          
+        }
+        else if(shape.strokeStyle === "dotted"){
+          dashed = [5, 5]
+        }
+        else{
+          dashed = null
+        }
+
         rc.rectangle(shape.x, shape.y, shape.width, shape.height, {
           fill: shape.fill,
           fillStyle: "solid",
           stroke: shape.stroke,
-          strokeWidth: 1,
-          roughness: 0,
+          strokeWidth: shape.strokeWidth,
+          roughness: shape.roughness,
+          strokeLineDash: dashed,
         });
       } else if (shape.type === "pencil") {
+
+        let dashed = null;
+        if (shape.strokeStyle === "dashed") {
+          dashed = [10, 10]
+
+        }
+        else if (shape.strokeStyle === "dotted") {
+          dashed = [5, 5]
+        }
+        else {
+          dashed = null
+        }
+
+
         const generator = rough.generator();
         const points = shape.points.map((point) => [point.x, point.y]);
         for (let i = 0; i < points.length - 1; i++) {
@@ -44,8 +72,9 @@ const RoughCanvas = () => {
             points[i + 1][1],
             {
               stroke: shape.stroke,
-              strokeWidth: 1,
-              roughness: 0,
+              strokeWidth: shape.strokeWidth,
+              roughness: shape.sloppiness,
+              strokeLineDash: dashed,
             }
           );
           rc.draw(line);
