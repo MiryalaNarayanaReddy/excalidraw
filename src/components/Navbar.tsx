@@ -2,6 +2,7 @@
 import  {useDrawing}  from "@/context/DrawingContext";
 
 const Navbar = () => {
+  //@ts-ignore
   const { mode, setMode } = useDrawing();
 
   return (
