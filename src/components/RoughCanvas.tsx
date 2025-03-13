@@ -8,7 +8,7 @@ import { useDrawing } from "@/context/DrawingContext";
 const RoughCanvas = () => {
   const canvasRef = useRef(null);
   const { points, startDrawing, draw, stopDrawing, previewRectangle } = useDrawing();
-  const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const updateSize = () => {
@@ -75,6 +75,7 @@ const RoughCanvas = () => {
   const handleMouseUp = (e) => stopDrawing(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
 
   return (
+    
     <canvas
       ref={canvasRef}
       width={dimensions.width}
