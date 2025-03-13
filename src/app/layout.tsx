@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DrawingProvider } from "@/context/DrawingContext";
 import Navbar from "@/components/Navbar"; // Fixed case issue
+import { FillColorSelection, StrokeColorSelection } from "@/components/ColorSelection";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <DrawingProvider>
-        <Navbar />
+          <Navbar />
+          <div className="fixed left-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-md shadow-lg rounded-lg px-6 py-3 flex space-x-4 z-50">
+            <div className="flex flex-col gap-2 w-52">
+              <div>Stroke</div>
+              <StrokeColorSelection />
+              <div>Background</div>
+              <FillColorSelection />
+            </div>
+          </div>
           {/* Main content */}
           {children}
         </DrawingProvider>      </body>

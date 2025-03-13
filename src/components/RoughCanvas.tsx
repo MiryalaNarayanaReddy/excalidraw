@@ -1,81 +1,93 @@
 //@ts-nocheck
-"use client";
-
+"use client"
 import { useEffect, useRef, useState } from "react";
 import rough from "roughjs";
 import { useDrawing } from "@/context/DrawingContext";
 
 const RoughCanvas = () => {
   const canvasRef = useRef(null);
-  const { points, startDrawing, draw, stopDrawing, previewRectangle } = useDrawing();
+  const { history, startDrawing, draw, stopDrawing, currentShape } = useDrawing();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const updateSize = () => {
       setDimensions({ width: window.innerWidth, height: window.innerHeight });
     };
-
     window.addEventListener("resize", updateSize);
-    updateSize(); // Set initial size
-
-    return () => {
-      window.removeEventListener("resize", updateSize);
-    };
+    updateSize();
+    return () => window.removeEventListener("resize", updateSize);
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden"; // Disable scrolling
-
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     const rc = rough.canvas(canvas);
-    const generator = rough.generator();
 
-    const redraw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      points.forEach((path) => {
-        if (path.length === 5) {
-          // Rectangle mode
-          const rect = generator.polygon(path.map((p) => [p.x, p.y]), {
-            roughness: 0,
-            stroke: "black",
-          });
-          rc.draw(rect);
-        } else {
-          // Pencil mode
-          for (let i = 0; i < path.length - 1; i++) {
-            const line = generator.line(path[i].x, path[i].y, path[i + 1].x, path[i + 1].y, {
+    const drawShape = (shape) => {
+      if (shape.type === "rectangle") {
+        rc.rectangle(shape.x, shape.y, shape.width, shape.height, {
+          fill: shape.fill,
+          fillStyle: "solid",
+          stroke: shape.stroke,
+          strokeWidth: 1,
+          roughness: 0,
+        });
+      } else if (shape.type === "pencil") {
+        const generator = rough.generator();
+        const points = shape.points.map((point) => [point.x, point.y]);
+        for (let i = 0; i < points.length - 1; i++) {
+          const line = generator.line(
+            points[i][0],
+            points[i][1],
+            points[i + 1][0],
+            points[i + 1][1],
+            {
+              stroke: shape.stroke,
+              strokeWidth: 1,
               roughness: 0,
-              stroke: "black",
-            });
-            rc.draw(line);
-          }
+            }
+          );
+          rc.draw(line);
         }
-      });
-
-      // Draw preview rectangle in light blue
-      if (previewRectangle) {
-        ctx.strokeStyle = "lightblue";
-        ctx.strokeRect(previewRectangle.x, previewRectangle.y, previewRectangle.width, previewRectangle.height);
       }
     };
 
-    redraw();
+    // console.log(history)
 
-    return () => {
-      document.body.style.overflow = ""; // Restore scrolling
+    const redraw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      history.forEach(drawShape); // Draw saved history
+      if (currentShape) drawShape(currentShape); // Draw real-time shape
     };
-  }, [points, previewRectangle]);
 
-  const handleMouseDown = (e) => startDrawing(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-  const handleMouseMove = (e) => draw(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-  const handleMouseUp = (e) => stopDrawing(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    let animationFrameId;
+    const renderLoop = () => {
+      redraw();
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+    renderLoop();
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [history, currentShape]);
+
+  const handleMouseDown = (e) => {
+    const { offsetX, offsetY } = e.nativeEvent;
+    startDrawing(offsetX, offsetY);
+  };
+
+  const handleMouseMove = (e) => {
+    if (e.buttons !== 1) return; // Only draw when mouse is pressed
+    const { offsetX, offsetY } = e.nativeEvent;
+    draw(offsetX, offsetY);
+  };
+
+  const handleMouseUp = (e) => {
+    const { offsetX, offsetY } = e.nativeEvent;
+    stopDrawing(offsetX, offsetY);
+  };
 
   return (
-    
     <canvas
       ref={canvasRef}
       width={dimensions.width}

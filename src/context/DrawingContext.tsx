@@ -1,64 +1,65 @@
 //@ts-nocheck
 "use client";
-
 import { createContext, useContext, useState } from "react";
 
 const DrawingContext = createContext(null);
 
 export const DrawingProvider = ({ children }) => {
   const [isDrawing, setIsDrawing] = useState(false);
-  const [points, setPoints] = useState([]); // Stores all drawings
-  const [mode, setMode] = useState("pencil"); // Toggle between "pencil" & "rectangle"
+  const [mode, setMode] = useState("pencil");
+  const [history, setHistory] = useState([]);
+  const [currentShape, setCurrentShape] = useState(null);
   const [startPoint, setStartPoint] = useState(null);
-  const [previewRectangle, setPreviewRectangle] = useState(null); // Temporary preview rectangle
+
+  const [selectedFill, setSelectedFill] = useState("green")
+  const [selectedStroke, setSelectedStroke] = useState("black");
 
   const startDrawing = (offsetX, offsetY) => {
     setIsDrawing(true);
+
     if (mode === "pencil") {
-      setPoints((prev) => [...prev, [{ x: offsetX, y: offsetY }]]);
+      setCurrentShape({ type: "pencil", points: [{ x: offsetX, y: offsetY}], stroke: selectedStroke, fill: selectedFill });
     } else if (mode === "rectangle") {
       setStartPoint({ x: offsetX, y: offsetY });
+      setCurrentShape({ type: "rectangle", x: offsetX, y: offsetY, width: 0, height: 0, stroke: selectedStroke, fill: selectedFill });
     }
   };
 
   const draw = (offsetX, offsetY) => {
-    if (!isDrawing) return;
+    if (!isDrawing || !currentShape) return;
+
     if (mode === "pencil") {
-      setPoints((prev) => {
-        const newPoints = [...prev];
-        newPoints[newPoints.length - 1].push({ x: offsetX, y: offsetY });
-        return newPoints;
-      });
+      setCurrentShape((prev) => ({
+        ...prev,
+        points: [...prev.points, { x: offsetX, y: offsetY, stroke: selectedStroke, fill: selectedFill }],
+      }));
     } else if (mode === "rectangle" && startPoint) {
-      setPreviewRectangle({
-        x: startPoint.x,
-        y: startPoint.y,
-        width: offsetX - startPoint.x,
-        height: offsetY - startPoint.y,
+      setCurrentShape({
+        type: "rectangle",
+        x: Math.min(startPoint.x, offsetX),
+        y: Math.min(startPoint.y, offsetY),
+        width: Math.abs(offsetX - startPoint.x),
+        height: Math.abs(offsetY - startPoint.y),
+        stroke: selectedStroke,
+        fill: selectedFill,
       });
     }
   };
 
-  const stopDrawing = (offsetX, offsetY) => {
+  const stopDrawing = () => {
+    if (!isDrawing) return;
     setIsDrawing(false);
-    if (mode === "rectangle" && startPoint) {
-      setPoints((prev) => [
-        ...prev,
-        [
-          { x: startPoint.x, y: startPoint.y },
-          { x: offsetX, y: startPoint.y },
-          { x: offsetX, y: offsetY },
-          { x: startPoint.x, y: offsetY },
-          { x: startPoint.x, y: startPoint.y }, // Closing the rectangle
-        ],
-      ]);
-      setStartPoint(null);
-      setPreviewRectangle(null);
+
+    if (currentShape) {
+      setHistory((prev) => [...prev, currentShape]);
+      setCurrentShape(null);
     }
   };
 
   return (
-    <DrawingContext.Provider value={{ points, startDrawing, draw, stopDrawing, mode, setMode, previewRectangle }}>
+    <DrawingContext.Provider
+      value={{ history, startDrawing, draw, stopDrawing, mode, setMode, currentShape, selectedFill,setSelectedFill, selectedStroke, setSelectedStroke }}
+    >
       {children}
     </DrawingContext.Provider>
   );
