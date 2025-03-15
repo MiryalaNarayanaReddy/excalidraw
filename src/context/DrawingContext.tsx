@@ -17,9 +17,12 @@ export const DrawingProvider = ({ children }) => {
   const [selectedStrokeWidth, setSelectedStrokeWidth] = useState(1)
   const [selectedStrokeStyle, setSelectedStrokeStyle] = useState("solid")
   const [selectedSloppiness, setSelectedSloppiness] = useState(0)
+  const [selectedOpacity, setSelectedOpacity] = useState(100)
 
   const startDrawing = (offsetX, offsetY) => {
     setIsDrawing(true);
+
+    setStartPoint({ x: offsetX, y: offsetY });
 
     if (mode === "pencil") {
       setCurrentShape({
@@ -29,7 +32,8 @@ export const DrawingProvider = ({ children }) => {
         fill: selectedFill,
         strokeWidth: selectedStrokeWidth,
         strokeStyle: selectedStrokeStyle,
-        sloppiness: selectedSloppiness
+        sloppiness: selectedSloppiness,
+        opacity: selectedOpacity
       });
     } else if (mode === "rectangle") {
       setStartPoint({ x: offsetX, y: offsetY });
@@ -43,9 +47,38 @@ export const DrawingProvider = ({ children }) => {
         fill: selectedFill,
         roughness: selectedSloppiness,
         strokeWidth: selectedStrokeWidth,
-        strokeStyle: selectedStrokeStyle
+        strokeStyle: selectedStrokeStyle,
+        opacity: selectedOpacity
       });
     }
+    else if(mode === "elipse"){
+      setCurrentShape({
+        type: "elipse",
+        x: offsetX,
+        y: offsetY,
+        width: 0,
+        height: 0,
+        stroke: selectedStroke,
+        fill: selectedFill,
+        roughness: selectedSloppiness,
+        strokeWidth: selectedStrokeWidth,
+        strokeStyle: selectedStrokeStyle,
+        opacity: selectedOpacity
+      });
+    }
+    else if(mode === "line"){
+      setCurrentShape({
+        type: "line",
+        points: [{ x: offsetX, y: offsetY }],
+        stroke: selectedStroke,
+        fill: selectedFill,
+        strokeWidth: selectedStrokeWidth,
+        strokeStyle: selectedStrokeStyle,
+        sloppiness: selectedSloppiness,
+        opacity: selectedOpacity
+      });
+    }
+   
   };
 
   const draw = (offsetX, offsetY) => {
@@ -69,7 +102,38 @@ export const DrawingProvider = ({ children }) => {
         fill: selectedFill,
         roughness: selectedSloppiness,
         strokeWidth: selectedStrokeWidth,
-        strokeStyle: selectedStrokeStyle
+        strokeStyle: selectedStrokeStyle,
+        opacity: selectedOpacity
+      });
+    }
+    else if(mode === "elipse" && startPoint){
+      setCurrentShape({
+        type: "elipse",
+        x: Math.min(startPoint.x, offsetX),
+        y: Math.min(startPoint.y, offsetY),
+        width: Math.abs(offsetX - startPoint.x),
+        height: Math.abs(offsetY - startPoint.y),
+        stroke: selectedStroke,
+        fill: selectedFill,
+        roughness: selectedSloppiness,
+        strokeWidth: selectedStrokeWidth,
+        strokeStyle: selectedStrokeStyle,
+        opacity: selectedOpacity
+      });
+    }
+    else if(mode === "line" && startPoint){
+      setCurrentShape({
+        type: "line",
+        points: [
+          { x: startPoint.x, y: startPoint.y },
+          { x: offsetX, y: offsetY },
+        ],
+        stroke: selectedStroke,
+        fill: selectedFill,
+        strokeWidth: selectedStrokeWidth,
+        strokeStyle: selectedStrokeStyle,
+        sloppiness: selectedSloppiness,
+        opacity: selectedOpacity
       });
     }
   };
@@ -86,7 +150,7 @@ export const DrawingProvider = ({ children }) => {
 
   return (
     <DrawingContext.Provider
-      value={{ history, startDrawing, draw, stopDrawing, mode, setMode, currentShape, selectedFill, setSelectedFill, selectedStroke, setSelectedStroke, selectedStrokeWidth, setSelectedStrokeWidth, selectedStrokeStyle, setSelectedStrokeStyle, selectedSloppiness, setSelectedSloppiness }}
+      value={{ history, startDrawing, draw, stopDrawing, mode, setMode, currentShape, selectedFill, setSelectedFill, selectedStroke, setSelectedStroke, selectedStrokeWidth, setSelectedStrokeWidth, selectedStrokeStyle, setSelectedStrokeStyle, selectedSloppiness, setSelectedSloppiness, selectedOpacity, setSelectedOpacity }}
     >
       {children}
     </DrawingContext.Provider>

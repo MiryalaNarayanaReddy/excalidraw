@@ -22,6 +22,22 @@ const Navbar = () => {
         >
           ⬛ Rectangle
         </button>
+
+        <button
+          className={`px-4 py-2 w-fit rounded-md shadow-md transition-all ${mode === "elipse" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          onClick={() => setMode("elipse")}
+        >
+           ⬤ Elipse
+        </button>
+
+        <button
+          className={`px-4 py-2 w-fit rounded-md shadow-md transition-all ${mode === "line" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          onClick={() => setMode("line")}
+        >
+          ➖ Line
+        </button>
   
     </div>
   );

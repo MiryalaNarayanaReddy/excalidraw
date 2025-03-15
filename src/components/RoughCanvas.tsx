@@ -4,6 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import rough from "roughjs";
 import { useDrawing } from "@/context/DrawingContext";
 
+
+function hex2rgba(hexa, opacity) {
+  let r = parseInt(hexa.slice(1, 3), 16);
+  let g = parseInt(hexa.slice(3, 5), 16);
+  let b = parseInt(hexa.slice(5, 7), 16);
+  let a = opacity;
+  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
+}
+
 const RoughCanvas = () => {
   const canvasRef = useRef(null);
   const { history, startDrawing, draw, stopDrawing, currentShape } = useDrawing();
@@ -30,19 +39,18 @@ const RoughCanvas = () => {
         let dashed = null;
         if (shape.strokeStyle === "dashed") {
           dashed = [10, 10]
-          
         }
-        else if(shape.strokeStyle === "dotted"){
+        else if (shape.strokeStyle === "dotted") {
           dashed = [5, 5]
         }
-        else{
+        else {
           dashed = null
         }
 
         rc.rectangle(shape.x, shape.y, shape.width, shape.height, {
-          fill: shape.fill,
+          fill: hex2rgba(shape.fill, shape.opacity / 100),
           fillStyle: "solid",
-          stroke: shape.stroke,
+          stroke: hex2rgba(shape.stroke, shape.opacity / 100),
           strokeWidth: shape.strokeWidth,
           roughness: shape.roughness,
           strokeLineDash: dashed,
@@ -71,7 +79,61 @@ const RoughCanvas = () => {
             points[i + 1][0],
             points[i + 1][1],
             {
-              stroke: shape.stroke,
+              stroke: hex2rgba(shape.stroke, shape.opacity / 100),
+              strokeWidth: shape.strokeWidth,
+              roughness: shape.sloppiness,
+              strokeLineDash: dashed,
+            }
+          );
+          rc.draw(line);
+        }
+      }
+      else if (shape.type === "elipse") {
+
+        let dashed = null;
+        if (shape.strokeStyle === "dashed") {
+          dashed = [10, 10]
+
+        }
+        else if (shape.strokeStyle === "dotted") {
+          dashed = [5, 5]
+        }
+        else {
+          dashed = null
+        }
+
+        rc.ellipse(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.width, shape.height, {
+          fill:  hex2rgba(shape.fill, shape.opacity / 100),
+          fillStyle: "solid",
+          stroke: hex2rgba(shape.stroke, shape.opacity / 100),
+          strokeWidth: shape.strokeWidth,
+          roughness: shape.roughness,
+          strokeLineDash: dashed,
+        });
+      }
+      else if (shape.type === "line") {
+        let dashed = null;
+        if (shape.strokeStyle === "dashed") {
+          dashed = [10, 10]
+
+        }
+        else if (shape.strokeStyle === "dotted") {
+          dashed = [5, 5]
+        }
+        else {
+          dashed = null
+        }
+
+        const generator = rough.generator();
+        const points = shape.points.map((point) => [point.x, point.y]);
+        for (let i = 0; i < points.length - 1; i++) {
+          const line = generator.line(
+            points[i][0],
+            points[i][1],
+            points[i + 1][0],
+            points[i + 1][1],
+            {
+              stroke: hex2rgba(shape.stroke, shape.opacity / 100),
               strokeWidth: shape.strokeWidth,
               roughness: shape.sloppiness,
               strokeLineDash: dashed,
