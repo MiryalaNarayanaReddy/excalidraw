@@ -1,7 +1,7 @@
 
 type Point = { x: number; y: number };
 
-function drawSelection({ point1, point2, roughCanvas }: { point1: Point; point2: Point; roughCanvas: any }) {
+function drawSelection( point1:Point, point2:Point, roughCanvas:any) {
     if (!roughCanvas || !point1 || !point2) return;
     
     const width = point2.x - point1.x;
@@ -13,9 +13,8 @@ function drawSelection({ point1, point2, roughCanvas }: { point1: Point; point2:
             strokeWidth: 1,
             roughness: 0,
             bowing: 0,
-            fill: "#fff",
-            fillStyle: "solid",
-            strokeLineDash: [5, 5],
+            fill: "rgba(0, 0, 0, 0)",
+            fillStyle: "solid"
         })
     );
 

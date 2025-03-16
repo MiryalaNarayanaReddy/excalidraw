@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import rough from "roughjs";
 import { useDrawing } from "@/context/DrawingContext";
+import drawSelection from "./selection";
 
 
 function hex2rgba(hexa, opacity) {
@@ -13,9 +14,35 @@ function hex2rgba(hexa, opacity) {
   return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
 }
 
+
+
+function selectionRect(canvas, x, y, width, height, color) {
+  // ligh sky blue background border light sky blue border 
+
+  const ctx = canvas.getContext("2d");
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, width, height);
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, height);
+}
+
+
+function selectionBox(canvas, x, y, width, height, color) {
+  // dotted border light sky blue border
+  const ctx = canvas.getContext("2d");
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, width, height);
+}
+
+
+
+
+
 const RoughCanvas = () => {
   const canvasRef = useRef(null);
-  const { history, startDrawing, draw, stopDrawing, currentShape } = useDrawing();
+  const { history, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects, selectionBox, setSelectionBox } = useDrawing();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -149,7 +176,20 @@ const RoughCanvas = () => {
     const redraw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       history.forEach(drawShape); // Draw saved history
-      if (currentShape) drawShape(currentShape); // Draw real-time shape
+      if (currentShape){
+         drawShape(currentShape); // Draw real-time shape
+      }
+
+      if(selectedObjects.length > 0){
+        
+        drawSelection(selectionBox.point1, selectionBox.point2, rc);
+
+        // console.log(selectionBox);
+        if(selectedObjects.length> 1){
+          selectedObjects.forEach(drawShape);
+        }
+
+      }
     };
 
     let animationFrameId;
