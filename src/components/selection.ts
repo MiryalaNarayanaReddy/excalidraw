@@ -42,18 +42,18 @@ function drawSelection( point1:Point, point2:Point, roughCanvas:any) {
         );
     });
 
-    // Handle cursor changes (this should be done in event listeners in the main app logic)
-    document.addEventListener("mousemove", (event) => {
-        const { clientX, clientY } = event;
-        handles.forEach(handle => {
-            if (
-                clientX >= handle.x - halfHandle && clientX <= handle.x + halfHandle &&
-                clientY >= handle.y - halfHandle && clientY <= handle.y + halfHandle
-            ) {
-                document.body.style.cursor = handle.cursor;
-            }
-        });
-    });
+    // // Handle cursor changes (this should be done in event listeners in the main app logic)
+    // document.addEventListener("mousemove", (event) => {
+    //     const { clientX, clientY } = event;
+    //     handles.forEach(handle => {
+    //         if (
+    //             clientX >= handle.x - halfHandle && clientX <= handle.x + halfHandle &&
+    //             clientY >= handle.y - halfHandle && clientY <= handle.y + halfHandle
+    //         ) {
+    //             document.body.style.cursor = handle.cursor;
+    //         }
+    //     });
+    // });
 }
 
 export default drawSelection;
