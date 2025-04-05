@@ -1,53 +1,31 @@
 "use client";
-import  {useDrawing}  from "@/context/DrawingContext";
+
+import { useDrawing } from "@/context/DrawingContext";
 
 const Navbar = () => {
-  //@ts-ignore
+  // @ts-ignore
   const { mode, setMode } = useDrawing();
 
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md shadow-lg rounded-lg px-6 py-3 flex space-x-4 z-50">
-  
-  <button
-          className={`px-4 py-2 w-fit rounded-md shadow-md transition-all ${mode === "pointer" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          onClick={() => setMode("pointer")}
-        >
-          {/* cursor-pointer symbol   */}
-           Pointer
-        </button>  
-  
+      {[
+        { key: "pointer", label: "Pointer" },
+        { key: "pan", label: "✋ Pan" },
+        { key: "pencil", label: "✏️ Pencil" },
+        { key: "rectangle", label: "⬛ Rectangle" },
+        { key: "elipse", label: "⬤ Elipse" },
+        { key: "line", label: "➖ Line" },
+      ].map(({ key, label }) => (
         <button
-          className={`px-4 py-2 w-fit rounded-md shadow-md transition-all ${mode === "pencil" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          onClick={() => setMode("pencil")}
+          key={key}
+          className={`px-4 py-2 rounded-md shadow-md transition-all ${
+            mode === key ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setMode(key)}
         >
-          ✏️ Pencil
+          {label}
         </button>
-        <button
-          className={`px-4 py-2 w-fit rounded-md shadow-md transition-all ${mode === "rectangle" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          onClick={() => setMode("rectangle")}
-        >
-          ⬛ Rectangle
-        </button>
-
-        <button
-          className={`px-4 py-2 w-fit rounded-md shadow-md transition-all ${mode === "elipse" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          onClick={() => setMode("elipse")}
-        >
-           ⬤ Elipse
-        </button>
-
-        <button
-          className={`px-4 py-2 w-fit rounded-md shadow-md transition-all ${mode === "line" ? "bg-blue-500 text-white" : "bg-gray-200"
-            }`}
-          onClick={() => setMode("line")}
-        >
-          ➖ Line
-        </button>
-  
+      ))}
     </div>
   );
 };

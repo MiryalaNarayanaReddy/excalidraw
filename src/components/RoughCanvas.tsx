@@ -44,20 +44,23 @@ const RoughCanvas = () => {
   const canvasRef = useRef(null);
   const { history, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects, selectionBox, setSelectionBox } = useDrawing();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-
   useEffect(() => {
-    const updateSize = () => {
+    const update = () =>
       setDimensions({ width: window.innerWidth, height: window.innerHeight });
-    };
-    window.addEventListener("resize", updateSize);
-    updateSize();
-    return () => window.removeEventListener("resize", updateSize);
+    window.addEventListener("resize", update);
+    update();
+    return () => window.removeEventListener("resize", update);
   }, []);
 
+  // pan & zoom state
+  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
+  const isPanning = useRef(false);
+  const panStart = useRef({ x: 0, y: 0 });
+
+  // main render loop
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext("2d")!;
     const rc = rough.canvas(canvas);
 
     const drawShape = (shape) => {
@@ -130,7 +133,7 @@ const RoughCanvas = () => {
         }
 
         rc.ellipse(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.width, shape.height, {
-          fill:  hex2rgba(shape.fill, shape.opacity / 100),
+          fill: hex2rgba(shape.fill, shape.opacity / 100),
           fillStyle: "solid",
           stroke: hex2rgba(shape.stroke, shape.opacity / 100),
           strokeWidth: shape.strokeWidth,
@@ -174,48 +177,93 @@ const RoughCanvas = () => {
     // console.log(history)
 
     const redraw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      history.forEach(drawShape); // Draw saved history
-      if (currentShape){
-         drawShape(currentShape); // Draw real-time shape
-      }
+      // apply transform
+      ctx.setTransform(
+        transform.scale,
+        0,
+        0,
+        transform.scale,
+        transform.x,
+        transform.y
+      );
+      // clear in world coords
+      ctx.clearRect(
+        -transform.x / transform.scale,
+        -transform.y / transform.scale,
+        canvas.width / transform.scale,
+        canvas.height / transform.scale
+      );
 
-      if(selectedObjects.length > 0){
-        
+      history.forEach(drawShape);
+      if (currentShape) drawShape(currentShape);
+
+      if (selectedObjects.length && selectionBox) {
         drawSelection(selectionBox.point1, selectionBox.point2, rc);
-
-        // console.log(selectionBox);
-        if(selectedObjects.length> 1){
+        if (selectedObjects.length > 1)
           selectedObjects.forEach(drawShape);
-        }
-
       }
     };
 
-    let animationFrameId;
-    const renderLoop = () => {
+    let id = requestAnimationFrame(function loop() {
       redraw();
-      animationFrameId = requestAnimationFrame(renderLoop);
-    };
-    renderLoop();
+      id = requestAnimationFrame(loop);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [history, currentShape, transform, selectedObjects, selectionBox]);
 
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [history, currentShape]);
-
-  const handleMouseDown = (e) => {
-    const { offsetX, offsetY } = e.nativeEvent;
-    startDrawing(offsetX, offsetY);
+  // drawing vs pan handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (mode === "pan") {
+      isPanning.current = true;
+      panStart.current = { x: e.clientX, y: e.clientY };
+    } else {
+      const { offsetX, offsetY } = e.nativeEvent;
+      startDrawing(
+        (offsetX - transform.x) / transform.scale,
+        (offsetY - transform.y) / transform.scale
+      );
+    }
+  };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (mode === "pan" && isPanning.current) {
+      const dx = e.clientX - panStart.current.x;
+      const dy = e.clientY - panStart.current.y;
+      panStart.current = { x: e.clientX, y: e.clientY };
+      setTransform((t) => ({ ...t, x: t.x + dx, y: t.y + dy }));
+    } else {
+      if (e.buttons !== 1) return;
+      const { offsetX, offsetY } = e.nativeEvent;
+      draw(
+        (offsetX - transform.x) / transform.scale,
+        (offsetY - transform.y) / transform.scale
+      );
+    }
+  };
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (mode === "pan") {
+      isPanning.current = false;
+    } else {
+      const { offsetX, offsetY } = e.nativeEvent;
+      stopDrawing(
+        (offsetX - transform.x) / transform.scale,
+        (offsetY - transform.y) / transform.scale
+      );
+    }
   };
 
-  const handleMouseMove = (e) => {
-    if (e.buttons !== 1) return; // Only draw when mouse is pressed
-    const { offsetX, offsetY } = e.nativeEvent;
-    draw(offsetX, offsetY);
-  };
-
-  const handleMouseUp = (e) => {
-    const { offsetX, offsetY } = e.nativeEvent;
-    stopDrawing(offsetX, offsetY);
+  // wheel zoom
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const rect = canvasRef.current!.getBoundingClientRect();
+    // world coords of mouse
+    const wx = (e.clientX - rect.left - transform.x) / transform.scale;
+    const wy = (e.clientY - rect.top - transform.y) / transform.scale;
+    const delta = -e.deltaY * 0.001;
+    const newScale = Math.min(Math.max(0.1, transform.scale * (1 + delta)), 10);
+    // recalc translation so zoom centers on mouse
+    const nx = e.clientX - rect.left - wx * newScale;
+    const ny = e.clientY - rect.top - wy * newScale;
+    setTransform({ x: nx, y: ny, scale: newScale });
   };
 
   return (
@@ -228,6 +276,7 @@ const RoughCanvas = () => {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onWheel={handleWheel}
     />
   );
 };
