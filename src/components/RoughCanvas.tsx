@@ -6,16 +6,6 @@ import { useDrawing } from "@/context/DrawingContext";
 import drawSelection from "./selection";
 
 
-function hex2rgba(hexa, opacity) {
-  let r = parseInt(hexa.slice(1, 3), 16);
-  let g = parseInt(hexa.slice(3, 5), 16);
-  let b = parseInt(hexa.slice(5, 7), 16);
-  let a = opacity;
-  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
-}
-
-
-
 function selectionRect(canvas, x, y, width, height, color) {
   // ligh sky blue background border light sky blue border 
 
@@ -37,12 +27,9 @@ function selectionBox(canvas, x, y, width, height, color) {
 }
 
 
-
-
-
 const RoughCanvas = () => {
   const canvasRef = useRef(null);
-  const { history, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects, selectionBox, setSelectionBox } = useDrawing();
+  const {mode, history, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects, selectionBox, setSelectionBox } = useDrawing();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   useEffect(() => {
     const update = () =>
@@ -63,119 +50,6 @@ const RoughCanvas = () => {
     const ctx = canvas.getContext("2d")!;
     const rc = rough.canvas(canvas);
 
-    const drawShape = (shape) => {
-      if (shape.type === "rectangle") {
-
-        let dashed = null;
-        if (shape.strokeStyle === "dashed") {
-          dashed = [10, 10]
-        }
-        else if (shape.strokeStyle === "dotted") {
-          dashed = [5, 5]
-        }
-        else {
-          dashed = null
-        }
-
-        rc.rectangle(shape.x, shape.y, shape.width, shape.height, {
-          fill: hex2rgba(shape.fill, shape.opacity / 100),
-          fillStyle: "solid",
-          stroke: hex2rgba(shape.stroke, shape.opacity / 100),
-          strokeWidth: shape.strokeWidth,
-          roughness: shape.roughness,
-          strokeLineDash: dashed,
-        });
-      } else if (shape.type === "pencil") {
-
-        let dashed = null;
-        if (shape.strokeStyle === "dashed") {
-          dashed = [10, 10]
-
-        }
-        else if (shape.strokeStyle === "dotted") {
-          dashed = [5, 5]
-        }
-        else {
-          dashed = null
-        }
-
-
-        const generator = rough.generator();
-        const points = shape.points.map((point) => [point.x, point.y]);
-        for (let i = 0; i < points.length - 1; i++) {
-          const line = generator.line(
-            points[i][0],
-            points[i][1],
-            points[i + 1][0],
-            points[i + 1][1],
-            {
-              stroke: hex2rgba(shape.stroke, shape.opacity / 100),
-              strokeWidth: shape.strokeWidth,
-              roughness: shape.sloppiness,
-              strokeLineDash: dashed,
-            }
-          );
-          rc.draw(line);
-        }
-      }
-      else if (shape.type === "elipse") {
-
-        let dashed = null;
-        if (shape.strokeStyle === "dashed") {
-          dashed = [10, 10]
-
-        }
-        else if (shape.strokeStyle === "dotted") {
-          dashed = [5, 5]
-        }
-        else {
-          dashed = null
-        }
-
-        rc.ellipse(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.width, shape.height, {
-          fill: hex2rgba(shape.fill, shape.opacity / 100),
-          fillStyle: "solid",
-          stroke: hex2rgba(shape.stroke, shape.opacity / 100),
-          strokeWidth: shape.strokeWidth,
-          roughness: shape.roughness,
-          strokeLineDash: dashed,
-        });
-      }
-      else if (shape.type === "line") {
-        let dashed = null;
-        if (shape.strokeStyle === "dashed") {
-          dashed = [10, 10]
-
-        }
-        else if (shape.strokeStyle === "dotted") {
-          dashed = [5, 5]
-        }
-        else {
-          dashed = null
-        }
-
-        const generator = rough.generator();
-        const points = shape.points.map((point) => [point.x, point.y]);
-        for (let i = 0; i < points.length - 1; i++) {
-          const line = generator.line(
-            points[i][0],
-            points[i][1],
-            points[i + 1][0],
-            points[i + 1][1],
-            {
-              stroke: hex2rgba(shape.stroke, shape.opacity / 100),
-              strokeWidth: shape.strokeWidth,
-              roughness: shape.sloppiness,
-              strokeLineDash: dashed,
-            }
-          );
-          rc.draw(line);
-        }
-      }
-    };
-
-    // console.log(history)
-
     const redraw = () => {
       // apply transform
       ctx.setTransform(
@@ -194,29 +68,33 @@ const RoughCanvas = () => {
         canvas.height / transform.scale
       );
 
-      history.forEach(drawShape);
-      if (currentShape) drawShape(currentShape);
+      history.forEach((shape)=>{
+        shape.draw(rc);
+      });
 
-      if (selectedObjects.length && selectionBox) {
-        drawSelection(selectionBox.point1, selectionBox.point2, rc);
-        if (selectedObjects.length > 1)
-          selectedObjects.forEach(drawShape);
-      }
+      
+      if (currentShape) currentShape.draw(rc);
+
+      // if (selectedObjects.length && selectionBox) {
+      //   drawSelection(selectionBox.point1, selectionBox.point2, rc);
+      //   if (selectedObjects.length > 1)
+      //     selectedObjects.forEach(drawShape);
+      // }
     };
 
-    let id = requestAnimationFrame(function loop() {
-      redraw();
-      id = requestAnimationFrame(loop);
-    });
-    return () => cancelAnimationFrame(id);
+    redraw();
+
   }, [history, currentShape, transform, selectedObjects, selectionBox]);
 
   // drawing vs pan handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     if (mode === "pan") {
       isPanning.current = true;
+      document.body.style.cursor = "grabbing";
       panStart.current = { x: e.clientX, y: e.clientY };
-    } else {
+    }
+    
+    else {
       const { offsetX, offsetY } = e.nativeEvent;
       startDrawing(
         (offsetX - transform.x) / transform.scale,
@@ -226,11 +104,63 @@ const RoughCanvas = () => {
   };
   const handleMouseMove = (e: React.MouseEvent) => {
     if (mode === "pan" && isPanning.current) {
+
       const dx = e.clientX - panStart.current.x;
       const dy = e.clientY - panStart.current.y;
       panStart.current = { x: e.clientX, y: e.clientY };
       setTransform((t) => ({ ...t, x: t.x + dx, y: t.y + dy }));
-    } else {
+    } 
+    else  if(mode === "pointer"){
+      // check if cursor is in a shape 
+      const x = e.clientX;
+      const y = e.clientY;
+      for (let i = 0; i < history.length; i++) {
+        const shape = history[i]; 
+
+        if(shape.type === "rectangle"){
+          // check if cursor is inside rectangle 
+          if(x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height){
+            document.body.style.cursor = "move";
+            return;
+          }
+        }
+        else if(shape.type === "elipse"){
+          // check if cursor is inside elipse 
+          if(x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height){
+            document.body.style.cursor = "move";
+            return;
+          }
+        }
+        else if (shape.type === "line") {
+          // check if cursor is on or near a line
+
+          // ab distance between points +2 = ap+bp distances 
+          const ap = Math.abs(shape.points[0].x - x) + Math.abs(shape.points[0].y - y);
+          const bp = Math.abs(shape.points[1].x - x) + Math.abs(shape.points[1].y - y);
+          const ab = Math.abs(shape.points[0].x - shape.points[1].x) + Math.abs(shape.points[0].y - shape.points[1].y); 
+
+          if(ap+bp - ab <= 0.3){
+            document.body.style.cursor = "move";
+            return;
+          }
+        
+        }
+        else if (shape.type === "pencil") {
+          // if cursor is near a point, set cursor to move crosshair 
+          for (let j = 0; j < shape.points.length; j++) {
+            if (x >= shape.points[j].x && x <= shape.points[j].x + 1 && y >= shape.points[j].y && y <= shape.points[j].y + 1) {
+              document.body.style.cursor = "move";
+              return;
+            }
+          }
+        }
+          
+      }
+      document.body.style.cursor = "default";
+    }
+    
+    
+    else {
       if (e.buttons !== 1) return;
       const { offsetX, offsetY } = e.nativeEvent;
       draw(
@@ -242,6 +172,7 @@ const RoughCanvas = () => {
   const handleMouseUp = (e: React.MouseEvent) => {
     if (mode === "pan") {
       isPanning.current = false;
+      document.body.style.cursor = "grab";
     } else {
       const { offsetX, offsetY } = e.nativeEvent;
       stopDrawing(

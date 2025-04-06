@@ -3,6 +3,11 @@
 import { get } from "http";
 import { createContext, useContext, useState } from "react";
 
+import Rectangle from "@/components/shapes/rectangle";
+import Elipse from "@/components/shapes/elipse";
+import Line from "@/components/shapes/line";
+import Pencil from "@/components/shapes/pencil";
+
 const DrawingContext = createContext(null);
 
 
@@ -88,48 +93,48 @@ function getSelectionRect(currentShape) {
 
 }
 
-function getSelectionBox(selectionRects) { 
+function getSelectionBox(selectionRects) {
 
   let point1 = {
-    x: selectionRects[0].x,  
+    x: selectionRects[0].x,
     y: selectionRects[0].y
   };
 
   let point2 = {
-    x: selectionRects[0].x+selectionRects[0].width,  
-    y: selectionRects[0].y+selectionRects[0].height
+    x: selectionRects[0].x + selectionRects[0].width,
+    y: selectionRects[0].y + selectionRects[0].height
   };
 
 
-  for(let i = 1; i < selectionRects.length; i++){
+  for (let i = 1; i < selectionRects.length; i++) {
     point1.x = Math.min(point1.x, selectionRects[i].x);
     point1.y = Math.min(point1.y, selectionRects[i].y);
-    point2.x = Math.max(point2.x, selectionRects[i].x+selectionRects[i].width);
-    point2.y = Math.max(point2.y, selectionRects[i].y+selectionRects[i].height);
+    point2.x = Math.max(point2.x, selectionRects[i].x + selectionRects[i].width);
+    point2.y = Math.max(point2.y, selectionRects[i].y + selectionRects[i].height);
   }
 
-  if(point1.x === point2.x){
+  if (point1.x === point2.x) {
     point1.x -= 1;
     point2.x += 1;
   }
-  else if(point1.y === point2.y){
+  else if (point1.y === point2.y) {
     point1.y -= 1;
     point2.y += 1;
-  } 
+  }
 
 
   let padding = 5;
-  
+
   point1.x = point1.x - padding;
   point1.y = point1.y - padding;
-  
-  point2.x = point2.x + padding;  
+
+  point2.x = point2.x + padding;
   point2.y = point2.y + padding;
 
-    return {
-      point1,
-      point2,
-    } 
+  return {
+    point1,
+    point2,
+  }
 
 }
 
@@ -159,74 +164,71 @@ export const DrawingProvider = ({ children }) => {
     setStartPoint({ x: offsetX, y: offsetY });
 
     if (mode === "pencil") {
-      setCurrentShape({
-        type: "pencil",
-        points: [{ x: offsetX, y: offsetY }],
-        stroke: selectedStroke,
-        fill: selectedFill,
-        strokeWidth: selectedStrokeWidth,
-        strokeStyle: selectedStrokeStyle,
-        sloppiness: selectedSloppiness,
-        opacity: selectedOpacity
-      });
+      const pencil = new Pencil(
+        [{ x: offsetX, y: offsetY }],
+        selectedStroke,
+        selectedFill,
+        selectedStrokeWidth,
+        selectedStrokeStyle,
+        selectedSloppiness,
+        selectedOpacity);
+      setCurrentShape(pencil);
+
     } else if (mode === "rectangle") {
       setStartPoint({ x: offsetX, y: offsetY });
-      setCurrentShape({
-        type: "rectangle",
-        x: offsetX,
-        y: offsetY,
-        width: 0,
-        height: 0,
-        stroke: selectedStroke,
-        fill: selectedFill,
-        roughness: selectedSloppiness,
-        strokeWidth: selectedStrokeWidth,
-        strokeStyle: selectedStrokeStyle,
-        opacity: selectedOpacity
-      });
+      const rect = new Rectangle(
+        offsetX,
+        offsetY,
+        0,
+        0,
+         selectedStroke,
+         selectedFill,
+         selectedSloppiness,
+         selectedStrokeWidth,
+         selectedStrokeStyle,
+         selectedOpacity);
+      setCurrentShape(rect);
     }
     else if (mode === "elipse") {
-      setCurrentShape({
-        type: "elipse",
-        x: offsetX,
-        y: offsetY,
-        width: 0,
-        height: 0,
-        stroke: selectedStroke,
-        fill: selectedFill,
-        roughness: selectedSloppiness,
-        strokeWidth: selectedStrokeWidth,
-        strokeStyle: selectedStrokeStyle,
-        opacity: selectedOpacity
-      });
+      const elipse = new Elipse(
+        offsetX,
+        offsetY,
+        0,
+        0,
+          selectedStroke,
+          selectedFill,
+          selectedSloppiness,
+          selectedStrokeWidth,
+          selectedStrokeStyle,
+          selectedOpacity);
+      setCurrentShape(elipse);
     }
     else if (mode === "line") {
-      setCurrentShape({
-        type: "line",
-        points: [{ x: offsetX, y: offsetY }],
-        stroke: selectedStroke,
-        fill: selectedFill,
-        strokeWidth: selectedStrokeWidth,
-        strokeStyle: selectedStrokeStyle,
-        sloppiness: selectedSloppiness,
-        opacity: selectedOpacity
-      });
+      const line = new Line(
+        { x: offsetX, y: offsetY },
+        { x: offsetX, y: offsetY },
+          selectedStroke,
+          selectedFill,
+          selectedStrokeWidth,
+          selectedStrokeStyle,
+          selectedSloppiness,
+          selectedOpacity);
+      setCurrentShape(line);
     }
     else if (mode === "pointer") {
       setStartPoint({ x: offsetX, y: offsetY });
-      setCurrentShape({
-        type: "rectangle",
-        x: offsetX,
-        y: offsetY,
-        width: 0,
-        height: 0,
-        stroke: "#2b7fff",
-        fill: "#60a5d3",
-        roughness: 0,
-        strokeWidth: 1,
-        strokeStyle: "solid",
-        opacity: 30
-      });
+      const rect = new Rectangle(
+        offsetX,
+        offsetY,
+        0,
+        0,
+          selectedStroke,
+          selectedFill,
+          selectedSloppiness,
+          selectedStrokeWidth,
+          selectedStrokeStyle,
+          selectedOpacity);
+      setCurrentShape(rect);
     }
 
   };
@@ -235,71 +237,82 @@ export const DrawingProvider = ({ children }) => {
     if (!isDrawing || !currentShape) return;
 
     if (mode === "pencil") {
-      setCurrentShape((prev) => ({
-        ...prev,
-        points: [...prev.points,
-        { x: offsetX, y: offsetY }
+      // setCurrentShape((prev) => ({
+      //   ...prev,
+      //   points: [...prev.points,
+      //   { x: offsetX, y: offsetY }
+      //   ],
+      // }));
+
+      const pencil = new Pencil(
+        [...currentShape.points,
+          { x: offsetX, y: offsetY }
         ],
-      }));
+        selectedStroke,
+        selectedFill,
+        selectedStrokeWidth,
+        selectedStrokeStyle,
+        selectedSloppiness,
+        selectedOpacity);
+      setCurrentShape(pencil);
+
+
     } else if (mode === "rectangle" && startPoint) {
-      setCurrentShape({
-        type: "rectangle",
-        x: Math.min(startPoint.x, offsetX),
-        y: Math.min(startPoint.y, offsetY),
-        width: Math.abs(offsetX - startPoint.x),
-        height: Math.abs(offsetY - startPoint.y),
-        stroke: selectedStroke,
-        fill: selectedFill,
-        roughness: selectedSloppiness,
-        strokeWidth: selectedStrokeWidth,
-        strokeStyle: selectedStrokeStyle,
-        opacity: selectedOpacity
-      });
+
+      const rect = new Rectangle(
+        Math.min(startPoint.x, offsetX),
+        Math.min(startPoint.y, offsetY),
+        Math.abs(offsetX - startPoint.x),
+        Math.abs(offsetY - startPoint.y),
+        selectedStroke,
+        selectedFill,
+        selectedSloppiness,
+        selectedStrokeWidth,
+        selectedStrokeStyle,
+        selectedOpacity);
+      setCurrentShape(rect);
+
     }
     else if (mode === "elipse" && startPoint) {
-      setCurrentShape({
-        type: "elipse",
-        x: Math.min(startPoint.x, offsetX),
-        y: Math.min(startPoint.y, offsetY),
-        width: Math.abs(offsetX - startPoint.x),
-        height: Math.abs(offsetY - startPoint.y),
-        stroke: selectedStroke,
-        fill: selectedFill,
-        roughness: selectedSloppiness,
-        strokeWidth: selectedStrokeWidth,
-        strokeStyle: selectedStrokeStyle,
-        opacity: selectedOpacity
-      });
+        const elipse = new Elipse(  
+          Math.min(startPoint.x, offsetX),  
+          Math.min(startPoint.y, offsetY),  
+          Math.abs(offsetX - startPoint.x),  
+          Math.abs(offsetY - startPoint.y),  
+            selectedStroke,  
+            selectedFill,  
+            selectedSloppiness,  
+            selectedStrokeWidth,  
+            selectedStrokeStyle,  
+            selectedOpacity);
+        setCurrentShape(elipse);  
     }
     else if (mode === "line" && startPoint) {
-      setCurrentShape({
-        type: "line",
-        points: [
-          { x: startPoint.x, y: startPoint.y },
-          { x: offsetX, y: offsetY },
-        ],
-        stroke: selectedStroke,
-        fill: selectedFill,
-        strokeWidth: selectedStrokeWidth,
-        strokeStyle: selectedStrokeStyle,
-        sloppiness: selectedSloppiness,
-        opacity: selectedOpacity
-      });
+      const line = new Line(
+        { x: startPoint.x, y: startPoint.y },
+        { x: offsetX, y: offsetY },
+          selectedStroke,
+          selectedFill,
+          selectedStrokeWidth,
+          selectedStrokeStyle,
+          selectedSloppiness,
+          selectedOpacity);
+      setCurrentShape(line);
     }
     else if (mode === "pointer" && startPoint) {
-      setCurrentShape({
-        type: "rectangle",
-        x: Math.min(startPoint.x, offsetX),
-        y: Math.min(startPoint.y, offsetY),
-        width: Math.abs(offsetX - startPoint.x),
-        height: Math.abs(offsetY - startPoint.y),
-        stroke: "#2b7fff",
-        fill: "#60a5d3",
-        roughness: 0,
-        strokeWidth: 1,
-        strokeStyle: "solid",
-        opacity: 30
-      });
+
+      const rect = new Rectangle(
+        Math.min(startPoint.x, offsetX),
+        Math.min(startPoint.y, offsetY),
+        Math.abs(offsetX - startPoint.x),
+        Math.abs(offsetY - startPoint.y),
+          "#2b7fff",
+          "#60a5d3",
+          0,
+          1,
+          "solid",
+          30);
+      setCurrentShape(rect);
     }
   };
 
@@ -308,79 +321,95 @@ export const DrawingProvider = ({ children }) => {
     setIsDrawing(false);
 
     if (currentShape) {
-      if (mode === "pointer") {
-        // set all objects inside the rectangle to be selected
 
-        const x = currentShape.x;
-        const y = currentShape.y;
-        const width = currentShape.width;
-        const height = currentShape.height;
+      console.log(currentShape);
 
-
-        if(width === 0 || height === 0){
-          setCurrentShape(null);
-          return;
-        }
-        const _selectedObjects = [];
-
-        for (let i = 0; i < history.length; i++) {
-          const shape = history[i];
-
-
-          if (shape.type === "rectangle") {
-            // check if rectangle is inside the current rectangle 
-            if (shape.x >= x && shape.x <= x + width && shape.y >= y && shape.y <= y + height) {
-              _selectedObjects.push(getSelectionRect(shape));
-            }
-          }
-          else if (shape.type === "elipse") {
-            // check if elipse is inside the current rectangle 
-            if (shape.x >= x && shape.x <= x + width && shape.y >= y && shape.y <= y + height) {
-              _selectedObjects.push(getSelectionRect(shape));
-            }
-          }
-          else if (shape.type === "line") {
-            // check if line is inside the current rectangle 
-            if (shape.points[0].x >= x && shape.points[0].x <= x + width && shape.points[0].y >= y && shape.points[0].y <= y + height) {
-              _selectedObjects.push(getSelectionRect(shape));
-            }
-            if (shape.points[1].x >= x && shape.points[1].x <= x + width && shape.points[1].y >= y && shape.points[1].y <= y + height) {
-              _selectedObjects.push(getSelectionRect(shape));
-            }
-          }
-          else if (shape.type === "pencil") {
-            // if even one point is outside the rectangle, then the whole shape is outside the rectangle
-
-            let inside = true;
-            for (let j = 0; j < shape.points.length; j++) {
-              if (shape.points[j].x >= x && shape.points[j].x <= x + width && shape.points[j].y >= y && shape.points[j].y <= y + height) {
-
-                inside = false;
-                break;
-              }
-            }
-
-            if (inside) {
-              _selectedObjects.push(getSelectionRect(shape));
-            }
-          }
-
-        }
-        console.log(_selectedObjects);
-        setSelectedObjects(prev => [..._selectedObjects]);
-
-        if(_selectedObjects.length === 0){
-          setSelectionBox(null);
-          return;
-        }
-        setSelectionBox(prev=>getSelectionBox(_selectedObjects));
+      if (mode === "rectangle"||mode === "elipse"||mode === "line"||mode === "pencil") {
+        setHistory((prev) => [...prev, currentShape]);
 
         setCurrentShape(null);
+        return;
+      }
 
+      if(mode === "pointer"){
+        setCurrentShape(null);
+        return;
       }
-      else {
-        setHistory((prev) => [...prev, currentShape]);
-      }
+      
+
+      // if (mode === "pointer") {
+      //   // set all objects inside the rectangle to be selected
+
+      //   const x = currentShape.x;
+      //   const y = currentShape.y;
+      //   const width = currentShape.width;
+      //   const height = currentShape.height;
+
+
+      //   if(width === 0 || height === 0){
+      //     setCurrentShape(null);
+      //     return;
+      //   }
+      //   const _selectedObjects = [];
+
+      //   for (let i = 0; i < history.length; i++) {
+      //     const shape = history[i];
+
+
+      //     if (shape.type === "rectangle") {
+      //       // check if rectangle is inside the current rectangle 
+      //       if (shape.x >= x && shape.x <= x + width && shape.y >= y && shape.y <= y + height) {
+      //         _selectedObjects.push(getSelectionRect(shape));
+      //       }
+      //     }
+      //     else if (shape.type === "elipse") {
+      //       // check if elipse is inside the current rectangle 
+      //       if (shape.x >= x && shape.x <= x + width && shape.y >= y && shape.y <= y + height) {
+      //         _selectedObjects.push(getSelectionRect(shape));
+      //       }
+      //     }
+      //     else if (shape.type === "line") {
+      //       // check if line is inside the current rectangle 
+      //       if (shape.points[0].x >= x && shape.points[0].x <= x + width && shape.points[0].y >= y && shape.points[0].y <= y + height) {
+      //         _selectedObjects.push(getSelectionRect(shape));
+      //       }
+      //       if (shape.points[1].x >= x && shape.points[1].x <= x + width && shape.points[1].y >= y && shape.points[1].y <= y + height) {
+      //         _selectedObjects.push(getSelectionRect(shape));
+      //       }
+      //     }
+      //     else if (shape.type === "pencil") {
+      //       // if even one point is outside the rectangle, then the whole shape is outside the rectangle
+
+      //       let inside = true;
+      //       for (let j = 0; j < shape.points.length; j++) {
+      //         if (shape.points[j].x >= x && shape.points[j].x <= x + width && shape.points[j].y >= y && shape.points[j].y <= y + height) {
+
+      //           inside = false;
+      //           break;
+      //         }
+      //       }
+
+      //       if (inside) {
+      //         _selectedObjects.push(getSelectionRect(shape));
+      //       }
+      //     }
+
+      //   }
+      //   console.log(_selectedObjects);
+      //   setSelectedObjects(prev => [..._selectedObjects]);
+
+      //   if(_selectedObjects.length === 0){
+      //     setSelectionBox(null);
+      //     return;
+      //   }
+      //   setSelectionBox(prev=>getSelectionBox(_selectedObjects));
+
+      //   setCurrentShape(null);
+
+      // }
+      // else {
+      setHistory((prev) => [...prev, currentShape]);
+      // }
       setCurrentShape(null);
     }
   };
