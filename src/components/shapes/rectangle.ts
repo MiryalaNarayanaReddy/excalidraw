@@ -99,6 +99,17 @@ class Rectangle {
        
     }
 
+    move(x1: number, y1: number,moveX: number, moveY: number){
+
+    console.log("move rectangle");
+    console.log(x1,y1,moveX,moveY);
+    console.log(this.x,this.y);
+      
+      this.x = this.x + (moveX-x1);
+      this.y = this.y + (moveY-y1);
+
+    }
+
 }
 
 

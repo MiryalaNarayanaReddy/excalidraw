@@ -197,7 +197,7 @@ export const DrawingProvider = ({ children }) => {
 
   return (
     <DrawingContext.Provider
-      value={{ history, startDrawing, draw, stopDrawing, mode, setMode, currentShape, selectedFill, setSelectedFill, selectedStroke, setSelectedStroke, selectedStrokeWidth, setSelectedStrokeWidth, selectedStrokeStyle, setSelectedStrokeStyle, selectedSloppiness, setSelectedSloppiness, selectedOpacity, setSelectedOpacity }}
+      value={{ history, setHistory,startDrawing, draw, stopDrawing, mode, setMode, currentShape, selectedFill, setSelectedFill, selectedStroke, setSelectedStroke, selectedStrokeWidth, setSelectedStrokeWidth, selectedStrokeStyle, setSelectedStrokeStyle, selectedSloppiness, setSelectedSloppiness, selectedOpacity, setSelectedOpacity }}
     >
       {children}
     </DrawingContext.Provider>

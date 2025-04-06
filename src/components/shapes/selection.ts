@@ -5,16 +5,16 @@ class SelectionBox {
 
     private point1: Point;
     private point2: Point;
-    private handles: Array<Point & { cursor: string }>;
+    private handles: Array<Point & { cursor: string,type: string }>;
 
     constructor(point1: Point, point2: Point) {
         this.point1 = point1;
         this.point2 = point2;
         this.handles = [
-            { x: point1.x, y: point1.y, cursor: "nwse-resize" }, // Top-left
-            { x: point2.x, y: point1.y, cursor: "nesw-resize" }, // Top-right
-            { x: point1.x, y: point2.y, cursor: "nesw-resize" }, // Bottom-left
-            { x: point2.x, y: point2.y, cursor: "nwse-resize" }  // Bottom-right
+            { x: point1.x, y: point1.y, cursor: "nwse-resize",type: "top-left" }, // Top-left
+            { x: point2.x, y: point1.y, cursor: "nesw-resize",type: "top-right" }, // Top-right
+            { x: point1.x, y: point2.y, cursor: "nesw-resize",type: "bottom-left" }, // Bottom-left
+            { x: point2.x, y: point2.y, cursor: "nwse-resize",type: "bottom-right" }  // Bottom-right
         ];
     }
 
@@ -69,7 +69,7 @@ class SelectionBox {
                 clientY <= handle.y + halfHandle
             ) {
                 document.body.style.cursor = handle.cursor;
-                return;
+                return handle.type;
             }
         }
 
@@ -89,25 +89,22 @@ class SelectionBox {
             const nearBottom = Math.abs(clientY - this.point2.y) < margin;
 
             // If near two edges, choose a diagonal resize cursor.
-            if (nearLeft && nearTop) {
-                document.body.style.cursor = "nwse-resize";
-            } else if (nearRight && nearTop) {
-                document.body.style.cursor = "nesw-resize";
-            } else if (nearLeft && nearBottom) {
-                document.body.style.cursor = "nesw-resize";
-            } else if (nearRight && nearBottom) {
-                document.body.style.cursor = "nwse-resize";
-            } else if (nearLeft || nearRight) {
+            if (nearLeft || nearRight) {
                 document.body.style.cursor = "ew-resize";
+                return nearLeft ? "left" : "right";
             } else if (nearTop || nearBottom) {
                 document.body.style.cursor = "ns-resize";
+                return nearTop ? "top" : "bottom";
             } else {
                 // Otherwise, if the mouse is inside but not near an edge, set move cursor.
                 document.body.style.cursor = "move";
+                return "inside";
             }
+
         } else {
             // If outside the rectangle, revert to default cursor.
             document.body.style.cursor = "default";
+            return "outside";
         }
     }
 }

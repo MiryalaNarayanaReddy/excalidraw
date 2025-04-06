@@ -7,34 +7,19 @@ import drawSelection from "./selection";
 
 import SelectionBox from "@/components/shapes/selection"
 
-
-function selectionRect(canvas, x, y, width, height, color) {
-  // ligh sky blue background border light sky blue border 
-
-  const ctx = canvas.getContext("2d");
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, width, height);
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, width, height);
-}
-
-
-function selectionBox(canvas, x, y, width, height, color) {
-  // dotted border light sky blue border
-  const ctx = canvas.getContext("2d");
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, width, height);
-}
+type Point = { x: number; y: number };
 
 
 const RoughCanvas = () => {
   const canvasRef = useRef(null);
-  const { mode, history, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects } = useDrawing();
+  const { mode, history,setHistory, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects } = useDrawing();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
+  const [selectionStartPoint, setSelectionStartPoint] = useState<Point | null>(null);
+
+  const [selectedObjectIndex, setSelectedObjectIndex] = useState<number | null>(null);
+  const [selectionBoxType, setSelectionBoxType] = useState<string | null>(null);
 
   useEffect(() => {
     const update = () =>
@@ -98,18 +83,37 @@ const RoughCanvas = () => {
       panStart.current = { x: e.clientX, y: e.clientY };
     }
     else if (mode === "pointer") {
+      let targetPoint = { x: e.clientX - transform.x, y: e.clientY - transform.y };
+
+      if (selectionBox) {
+        const type = selectionBox.mouseOverHandle(e.clientX, e.clientY);
+
+        if (type == "outside") {
+          setSelectionBox(prev => null);
+          setSelectionStartPoint(prev => null);
+          setSelectedObjectIndex(prev => null);
+          return;
+        }
+        else {
+          setSelectionBoxType(prev => type);
+          setSelectionStartPoint(prev => {
+            return { x: e.clientX , y: e.clientY  };
+          });
+          return;
+        }
+      }
 
       let i = history.length - 1;
       let flag = false;
 
-      let targetPoint = { x: e.clientX - transform.x, y: e.clientY - transform.y };
 
       while (i >= 0) {
         if (history[i].contains(targetPoint.x, targetPoint.y)) {
 
-          // setSelectedObjects(prev => [...prev, history[i]]);
-          let pts = history[i].getSelectionBox()
+          setSelectedObjectIndex(i);
+          setSelectionStartPoint(prev => targetPoint);
 
+          let pts = history[i].getSelectionBox()
           let _selectionBox = new SelectionBox(pts.point1, pts.point2);
 
           setSelectionBox(prev => _selectionBox);
@@ -127,6 +131,7 @@ const RoughCanvas = () => {
       else {
         document.body.style.cursor = "default";
         setSelectionBox(null);
+        setSelectedObjectIndex(null);
       }
 
     }
@@ -154,12 +159,22 @@ const RoughCanvas = () => {
 
 
 
-      if(selectionBox){
-        selectionBox.mouseOverHandle(x, y);
-        return;
+      if (selectionBox) {
+
+        if (selectionBoxType == "inside") {
+
+          setHistory((prev) => {
+            let newHistory = [...prev];
+            newHistory[selectedObjectIndex].move(selectionStartPoint.x, selectionStartPoint.y, x, y);
+            return newHistory;
+          })
+          
+          setSelectionStartPoint(prev => {
+            return { x: e.clientX, y: e.clientY };
+          });
+        }
+        return
       }
-
-
 
       let flag = false;
 
@@ -189,6 +204,15 @@ const RoughCanvas = () => {
     }
   };
   const handleMouseUp = (e: React.MouseEvent) => {
+
+    if(mode==="pointer"){
+      
+      // setSelectedObjectIndex(null);
+      setSelectionStartPoint(null);
+      setSelectionBoxType(null);
+  
+    
+    }
     if (mode === "pan") {
       isPanning.current = false;
       document.body.style.cursor = "grab";
