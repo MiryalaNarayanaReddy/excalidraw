@@ -27,7 +27,7 @@ export const DrawingProvider = ({ children }) => {
 
   const startDrawing = (offsetX, offsetY) => {
     setIsDrawing(true);
-    setSelectedObjects(prev => []);
+
     setStartPoint({ x: offsetX, y: offsetY });
 
     if (mode === "pencil") {
