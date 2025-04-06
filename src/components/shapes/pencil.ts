@@ -98,12 +98,61 @@ class Pencil {
     }
 
     contains(x: number, y: number) {
-      
+
+      // in 1 radius of each point
+      for (let i = 0; i < this.points.length; i++) {
+         let dist= Math.sqrt(Math.pow(x - this.points[i].x, 2) + Math.pow(y - this.points[i].y, 2));
+         if(dist <= 5){
+           return true;
+         }
+      }
+      return false;
     }
 
     getBounds() {
       
     }
+
+    getSelectionBox(){
+      let padding = 5;
+      
+      let point1 = {
+        x: this.points[0].x,
+        y: this.points[0].y,
+      };
+
+      let point2 = {
+        x: this.points[0].x,
+        y: this.points[0].y,
+      };
+
+      for (let i = 1; i < this.points.length; i++) {
+
+        point1.x = Math.min(point1.x, this.points[i].x );
+        point1.y = Math.min(point1.y, this.points[i].y );
+
+        point2.x = Math.max(point2.x, this.points[i].x);
+        point2.y = Math.max(point2.y, this.points[i].y);
+      }
+
+      if (point1.x === point2.x) {
+        point1.x -= 1;
+        point2.x += 1;
+      }
+      else if (point1.y === point2.y) {
+        point1.y -= 1;
+        point2.y += 1;
+      }
+
+
+      return {
+        point1,
+        point2,
+      }
+       
+    } 
+
+    
 
 }
 

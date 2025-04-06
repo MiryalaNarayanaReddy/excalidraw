@@ -1,5 +1,10 @@
 
 
+//@ts-ignore
+function dotProduct(a, b) {
+  return a.x * b.x + a.y * b.y;
+}
+
 type Point = { x: number; y: number };
 
 class Line {
@@ -33,12 +38,31 @@ class Line {
     }
 
     contains(x: number, y: number) {
-        return (
-            x >= Math.min(this.point1.x, this.point2.x) &&
-            x <= Math.max(this.point1.x, this.point2.x) &&
-            y >= Math.min(this.point1.y, this.point2.y) &&
-            y <= Math.max(this.point1.y, this.point2.y)
-        );
+
+
+        // check perpendicular distance between line and point 
+
+        // c = a.b/|a|^2  // d = |c*a-b|  // a is a vector and b is a point . d = perpendicular distance between line and point
+
+        let a = {x:this.point1.x - this.point2.x,y: this.point1.y - this.point2.y};
+        // @ts-ignore
+        let b = {x:x - this.point2.x, y:y - this.point2.y};  
+
+        let ab = dotProduct(a, b);
+        let modA = Math.sqrt(Math.pow(a.x, 2) + Math.pow(a.y, 2));
+        let c = ab / Math.pow(modA, 2);
+
+        let dv = {x:c*a.x-b.x, y:c*a.y-b.y};
+
+        let d = Math.sqrt(Math.pow(dv.x, 2) + Math.pow(dv.y, 2));
+
+        if(d <= 5){
+          return true;
+        }
+        else{
+          return false;
+        }
+        
     }
 
     getBounds() {
@@ -48,6 +72,22 @@ class Line {
             right: Math.max(this.point1.x, this.point2.x),
             bottom: Math.max(this.point1.y, this.point2.y),
         };
+    }
+
+    getSelectionBox(){
+      let padding = 5;
+      
+      return {
+        point1: {
+          x: Math.min(this.point1.x, this.point2.x) - padding,
+          y: Math.min(this.point1.y, this.point2.y) - padding,
+        },
+        point2: {
+          x: Math.max(this.point1.x, this.point2.x) + padding,
+          y: Math.max(this.point1.y, this.point2.y) + padding,
+        },
+      }
+       
     }
 
 }

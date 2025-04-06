@@ -75,11 +75,10 @@ const RoughCanvas = () => {
       
       if (currentShape) currentShape.draw(rc);
 
-      // if (selectedObjects.length && selectionBox) {
-      //   drawSelection(selectionBox.point1, selectionBox.point2, rc);
-      //   if (selectedObjects.length > 1)
-      //     selectedObjects.forEach(drawShape);
-      // }
+      if (selectedObjects.length && selectionBox) {
+        drawSelection(selectionBox.point1, selectionBox.point2, rc);
+        // if (selectedObjects.length > 1)
+      }
     };
 
     redraw();
@@ -92,6 +91,37 @@ const RoughCanvas = () => {
       isPanning.current = true;
       document.body.style.cursor = "grabbing";
       panStart.current = { x: e.clientX, y: e.clientY };
+    }
+    else if(mode === "pointer"){
+
+      let i = history.length - 1; 
+      let flag = false;
+
+      let targetPoint = {x: e.clientX-transform.x, y: e.clientY-transform.y};
+
+      while(i >= 0){
+        if(history[i].contains(targetPoint.x, targetPoint.y)){
+
+          setSelectedObjects(prev => [...prev, history[i]]);
+          setSelectionBox(prev=>history[i].getSelectionBox());
+        
+          flag = true;
+          break;
+        
+        }
+        i--;
+      }
+
+      if(flag){
+        document.body.style.cursor = "move";
+        return;
+      }
+      else{
+        document.body.style.cursor = "default";
+        setSelectedObjects(prev=>[]);
+        setSelectionBox(prev=>null);
+      }
+
     }
     
     else {
@@ -112,54 +142,27 @@ const RoughCanvas = () => {
     } 
     else  if(mode === "pointer"){
       // check if cursor is in a shape 
-      const x = e.clientX;
-      const y = e.clientY;
-      for (let i = 0; i < history.length; i++) {
-        const shape = history[i]; 
+      const x = e.clientX - transform.x;
+      const y = e.clientY - transform.y;
 
-        if(shape.type === "rectangle"){
-          // check if cursor is inside rectangle 
-          if(x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height){
-            document.body.style.cursor = "move";
-            return;
-          }
-        }
-        else if(shape.type === "elipse"){
-          // check if cursor is inside elipse 
-          if(x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height){
-            document.body.style.cursor = "move";
-            return;
-          }
-        }
-        else if (shape.type === "line") {
-          // check if cursor is on or near a line
+      let flag = false;
 
-          // ab distance between points +2 = ap+bp distances 
-          const ap = Math.abs(shape.points[0].x - x) + Math.abs(shape.points[0].y - y);
-          const bp = Math.abs(shape.points[1].x - x) + Math.abs(shape.points[1].y - y);
-          const ab = Math.abs(shape.points[0].x - shape.points[1].x) + Math.abs(shape.points[0].y - shape.points[1].y); 
+      history.forEach((shape)=>{
 
-          if(ap+bp - ab <= 0.3){
-            document.body.style.cursor = "move";
-            return;
-          }
-        
+        if(shape.contains(x, y)){
+          flag = true;
         }
-        else if (shape.type === "pencil") {
-          // if cursor is near a point, set cursor to move crosshair 
-          for (let j = 0; j < shape.points.length; j++) {
-            if (x >= shape.points[j].x && x <= shape.points[j].x + 1 && y >= shape.points[j].y && y <= shape.points[j].y + 1) {
-              document.body.style.cursor = "move";
-              return;
-            }
-          }
-        }
-          
+      })
+
+      if(flag){
+        document.body.style.cursor = "move";
+        return;
       }
-      document.body.style.cursor = "default";
+      else{
+        document.body.style.cursor = "default";
+      }
     }
-    
-    
+
     else {
       if (e.buttons !== 1) return;
       const { offsetX, offsetY } = e.nativeEvent;

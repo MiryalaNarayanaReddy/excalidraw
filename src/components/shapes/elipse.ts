@@ -51,6 +51,21 @@ class Elipse {
             bottom: this.y + this.height,
         };
     }
+    getSelectionBox(){
+      let padding = 5;
+      
+      return {
+        point1: {
+          x: this.x - padding,
+          y: this.y - padding,
+        },
+        point2: {
+          x: this.x + this.width + padding,
+          y: this.y + this.height + padding,
+        },
+      }
+       
+    }
 
 }   
 

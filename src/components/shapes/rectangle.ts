@@ -61,12 +61,17 @@ class Rectangle {
     }
 
     contains(x: number, y: number) {
-        return (
-            x >= this.x &&
-            x <= this.x + this.width &&
-            y >= this.y &&
-            y <= this.y + this.height
-        );
+
+      // check if cursor is inside rectangle 
+
+      // x insde (x, x + width) and y inside (y, y + height)
+      if(x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height){
+        return true;
+      }
+      else{
+        return false;
+      }
+      
     }
 
     getBounds() {
@@ -76,6 +81,22 @@ class Rectangle {
             right: this.x + this.width,
             bottom: this.y + this.height,
         };
+    }
+
+    getSelectionBox(){
+      let padding = 5;
+      
+      return {
+        point1: {
+          x: this.x - padding,
+          y: this.y - padding,
+        },
+        point2: {
+          x: this.x + this.width + padding,
+          y: this.y + this.height + padding,
+        },
+      }
+       
     }
 
 }
