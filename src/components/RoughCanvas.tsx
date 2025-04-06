@@ -5,6 +5,8 @@ import rough from "roughjs";
 import { useDrawing } from "@/context/DrawingContext";
 import drawSelection from "./selection";
 
+import SelectionBox from "@/components/shapes/selection"
+
 
 function selectionRect(canvas, x, y, width, height, color) {
   // ligh sky blue background border light sky blue border 
@@ -29,8 +31,11 @@ function selectionBox(canvas, x, y, width, height, color) {
 
 const RoughCanvas = () => {
   const canvasRef = useRef(null);
-  const {mode, history, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects, selectionBox, setSelectionBox } = useDrawing();
+  const { mode, history, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects } = useDrawing();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
+
   useEffect(() => {
     const update = () =>
       setDimensions({ width: window.innerWidth, height: window.innerHeight });
@@ -68,17 +73,17 @@ const RoughCanvas = () => {
         canvas.height / transform.scale
       );
 
-      history.forEach((shape)=>{
+      history.forEach((shape) => {
         shape.draw(rc);
       });
 
-      
-      if (currentShape) currentShape.draw(rc);
 
-      if (selectedObjects.length && selectionBox) {
-        drawSelection(selectionBox.point1, selectionBox.point2, rc);
-        // if (selectedObjects.length > 1)
-      }
+      if (currentShape)
+        currentShape.draw(rc);
+
+      if (selectionBox)
+        selectionBox.draw(rc);
+
     };
 
     redraw();
@@ -92,38 +97,40 @@ const RoughCanvas = () => {
       document.body.style.cursor = "grabbing";
       panStart.current = { x: e.clientX, y: e.clientY };
     }
-    else if(mode === "pointer"){
+    else if (mode === "pointer") {
 
-      let i = history.length - 1; 
+      let i = history.length - 1;
       let flag = false;
 
-      let targetPoint = {x: e.clientX-transform.x, y: e.clientY-transform.y};
+      let targetPoint = { x: e.clientX - transform.x, y: e.clientY - transform.y };
 
-      while(i >= 0){
-        if(history[i].contains(targetPoint.x, targetPoint.y)){
+      while (i >= 0) {
+        if (history[i].contains(targetPoint.x, targetPoint.y)) {
 
-          setSelectedObjects(prev => [...prev, history[i]]);
-          setSelectionBox(prev=>history[i].getSelectionBox());
-        
+          // setSelectedObjects(prev => [...prev, history[i]]);
+          let pts = history[i].getSelectionBox()
+
+          let _selectionBox = new SelectionBox(pts.point1, pts.point2);
+
+          setSelectionBox(prev => _selectionBox);
+
           flag = true;
           break;
-        
         }
         i--;
       }
 
-      if(flag){
+      if (flag) {
         document.body.style.cursor = "move";
         return;
       }
-      else{
+      else {
         document.body.style.cursor = "default";
-        setSelectedObjects(prev=>[]);
-        setSelectionBox(prev=>null);
+        setSelectionBox(null);
       }
 
     }
-    
+
     else {
       const { offsetX, offsetY } = e.nativeEvent;
       startDrawing(
@@ -139,26 +146,35 @@ const RoughCanvas = () => {
       const dy = e.clientY - panStart.current.y;
       panStart.current = { x: e.clientX, y: e.clientY };
       setTransform((t) => ({ ...t, x: t.x + dx, y: t.y + dy }));
-    } 
-    else  if(mode === "pointer"){
+    }
+    else if (mode === "pointer") {
       // check if cursor is in a shape 
       const x = e.clientX - transform.x;
       const y = e.clientY - transform.y;
 
+
+
+      if(selectionBox){
+        selectionBox.mouseOverHandle(x, y);
+        return;
+      }
+
+
+
       let flag = false;
 
-      history.forEach((shape)=>{
+      history.forEach((shape) => {
 
-        if(shape.contains(x, y)){
+        if (shape.contains(x, y)) {
           flag = true;
         }
       })
 
-      if(flag){
+      if (flag) {
         document.body.style.cursor = "move";
         return;
       }
-      else{
+      else {
         document.body.style.cursor = "default";
       }
     }
