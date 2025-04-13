@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar"; // Fixed case issue
 import { FillColorSelection, StrokeColorSelection } from "@/components/ColorSelection";
 import { StrokeStyleSection, StrokeWidthSelection } from "@/components/StrokeSelection";
 import { OpacitySection } from "@/components/Opacity";
+import ZoomSelection from "@/components/ZoomSelection";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,7 @@ export default function RootLayout({
       >
         <DrawingProvider>
           <Navbar />
-          <div className="fixed left-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-md shadow-lg rounded-lg px-6 py-3 flex space-x-4 z-50">
+          <div className="fixed left-10 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-md shadow-lg rounded-lg px-6 py-3 flex space-x-4 z-50">
             <div className="flex flex-col gap-2 w-52">
               <div>Stroke</div>
               <StrokeColorSelection />
@@ -50,7 +51,12 @@ export default function RootLayout({
           </div>
           {/* Main content */}
           {children}
-        </DrawingProvider>      </body>
+          <div className="fixed bottom-4 left-10 backdrop-blur-md bg-violet-100 shadow-lg rounded-lg px-4 py-2 z-50">
+          <ZoomSelection />
+            </div>
+
+        </DrawingProvider>      
+        </body>
     </html>
   );
 }

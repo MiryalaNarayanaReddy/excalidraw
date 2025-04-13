@@ -12,7 +12,7 @@ type Point = { x: number; y: number };
 
 const RoughCanvas = () => {
   const canvasRef = useRef(null);
-  const { mode, history,setHistory, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects } = useDrawing();
+  const { mode, history,setHistory, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects,transform, setTransform } = useDrawing();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
@@ -30,7 +30,7 @@ const RoughCanvas = () => {
   }, []);
 
   // pan & zoom state
-  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
+  
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0 });
 

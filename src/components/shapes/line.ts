@@ -1,10 +1,9 @@
 
 
 //@ts-ignore
-function dotProduct(a, b) {
-  return a.x * b.x + a.y * b.y;
+function crossProduct(a, b) {
+    return {x: a.x * b.y - a.y * b.x, y: a.y * b.x - a.x * b.y};
 }
-
 type Point = { x: number; y: number };
 
 class Line {
@@ -41,22 +40,25 @@ class Line {
 
 
         // check perpendicular distance between line and point 
-
-        // c = a.b/|a|^2  // d = |c*a-b|  // a is a vector and b is a point . d = perpendicular distance between line and point
+        // d = aXb/|a| 
 
         let a = {x:this.point1.x - this.point2.x,y: this.point1.y - this.point2.y};
         // @ts-ignore
-        let b = {x:x - this.point2.x, y:y - this.point2.y};  
+        let b = {x: x-this.point1.x,y: y-this.point1.y}
 
-        let ab = dotProduct(a, b);
+        let axb = crossProduct(a,b);
         let modA = Math.sqrt(Math.pow(a.x, 2) + Math.pow(a.y, 2));
-        let c = ab / Math.pow(modA, 2);
+        let modaxb = Math.sqrt(Math.pow(axb.x, 2) + Math.pow(axb.y, 2));
 
-        let dv = {x:c*a.x-b.x, y:c*a.y-b.y};
+        if(modA === 0){
+            return false;
+        } 
 
-        let d = Math.sqrt(Math.pow(dv.x, 2) + Math.pow(dv.y, 2));
+        let t = Math.abs(modaxb / modA);
 
-        if(d <= 5){
+        // console.log(modA,modaxb,t);
+
+        if(t>=0 && t < 5){
           return true;
         }
         else{

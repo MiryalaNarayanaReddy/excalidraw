@@ -24,6 +24,8 @@ export const DrawingProvider = ({ children }) => {
   const [selectedStrokeStyle, setSelectedStrokeStyle] = useState("solid")
   const [selectedSloppiness, setSelectedSloppiness] = useState(0)
   const [selectedOpacity, setSelectedOpacity] = useState(100)
+  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 }); 
+
 
   const startDrawing = (offsetX, offsetY) => {
     setIsDrawing(true);
@@ -197,7 +199,7 @@ export const DrawingProvider = ({ children }) => {
 
   return (
     <DrawingContext.Provider
-      value={{ history, setHistory,startDrawing, draw, stopDrawing, mode, setMode, currentShape, selectedFill, setSelectedFill, selectedStroke, setSelectedStroke, selectedStrokeWidth, setSelectedStrokeWidth, selectedStrokeStyle, setSelectedStrokeStyle, selectedSloppiness, setSelectedSloppiness, selectedOpacity, setSelectedOpacity }}
+      value={{ history, setHistory,startDrawing, draw, stopDrawing, mode, setMode, currentShape, selectedFill, setSelectedFill, selectedStroke, setSelectedStroke, selectedStrokeWidth, setSelectedStrokeWidth, selectedStrokeStyle, setSelectedStrokeStyle, selectedSloppiness, setSelectedSloppiness, selectedOpacity, setSelectedOpacity, transform, setTransform }}
     >
       {children}
     </DrawingContext.Provider>

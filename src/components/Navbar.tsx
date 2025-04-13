@@ -1,6 +1,13 @@
 "use client";
 
 import { useDrawing } from "@/context/DrawingContext";
+import { Square } from "lucide-react";
+import { Hand } from "lucide-react";
+import { Pencil } from "lucide-react";
+import { Eraser } from "lucide-react";
+import { Minus } from "lucide-react";
+import { Circle } from "lucide-react";
+import { MousePointer } from "lucide-react";
 
 const Navbar = () => {
   // @ts-ignore
@@ -23,21 +30,24 @@ const Navbar = () => {
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md shadow-lg rounded-lg px-6 py-3 flex space-x-4 z-50">
       {[
-        { key: "pointer", label: "Pointer" },
-        { key: "pan", label: "✋ Pan" },
-        { key: "pencil", label: "✏️ Pencil" },
-        { key: "rectangle", label: "⬛ Rectangle" },
-        { key: "elipse", label: "⬤ Elipse" },
-        { key: "line", label: "➖ Line" },
-      ].map(({ key, label }) => (
+        { key: "pan", label: "Hand", icon: <Hand /> },
+        { key: "pointer", label: "Pointer", icon: <MousePointer /> },
+        { key: "rectangle", label: "Rectangle", icon: <Square /> },
+        { key: "elipse", label: "Circle", icon: <Circle /> },
+        { key: "line", label: "Line", icon: <Minus /> },  
+        { key: "pencil", label: "Draw", icon: <Pencil /> },
+        { key: "eraser", label: "Eraser", icon: <Eraser /> },
+       
+      ].map(({ key, label, icon }) => (
         <button
           key={key}
-          className={`px-4 py-2 rounded-md shadow-md transition-all ${
-            mode === key ? "bg-blue-500 text-white" : "bg-gray-200"
+          title={label}
+          className={`px-2 py-2 rounded-lg transition-all cursor-pointer ${
+            mode === key ? "bg-violet-200" : "hover:bg-violet-100"
           }`}
           onClick={() =>handleModeChange(key)}
         >
-          {label}
+          {icon}
         </button>
       ))}
     </div>
