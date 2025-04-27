@@ -12,13 +12,13 @@ type Point = { x: number; y: number };
 
 const RoughCanvas = () => {
   const canvasRef = useRef(null);
-  const { mode, history,setHistory, startDrawing, draw, stopDrawing, currentShape, selectedObjects, setSelectedObjects,transform, setTransform } = useDrawing();
+  const { mode, history,setHistory, startDrawing, draw, stopDrawing, currentShape,transform, selectedObjectIndex, setSelectedObjectIndex, setTransform } = useDrawing();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
   const [selectionStartPoint, setSelectionStartPoint] = useState<Point | null>(null);
 
-  const [selectedObjectIndex, setSelectedObjectIndex] = useState<number | null>(null);
+
   const [selectionBoxType, setSelectionBoxType] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,7 +73,7 @@ const RoughCanvas = () => {
 
     redraw();
 
-  }, [history, currentShape, transform, selectedObjects, selectionBox]);
+  }, [history, currentShape, transform, selectionBox]);
 
   // drawing vs pan handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -83,40 +83,37 @@ const RoughCanvas = () => {
       panStart.current = { x: e.clientX, y: e.clientY };
     }
     else if (mode === "pointer") {
-      let targetPoint = { x: e.clientX - transform.x, y: e.clientY - transform.y };
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const worldX = (e.clientX - rect.left - transform.x) / transform.scale;
+      const worldY = (e.clientY - rect.top - transform.y) / transform.scale;
 
       if (selectionBox) {
-        const type = selectionBox.mouseOverHandle(e.clientX, e.clientY);
+        const type = selectionBox.mouseOverHandle(worldX, worldY);
 
-        if (type == "outside") {
-          setSelectionBox(prev => null);
-          setSelectionStartPoint(prev => null);
-          setSelectedObjectIndex(prev => null);
+        if (type === "outside") {
+          // Only clear selection if clicking outside the selection box
+          setSelectionBox(null);
+          setSelectedObjectIndex(null);
+          setSelectionStartPoint(null);
           return;
-        }
-        else {
-          setSelectionBoxType(prev => type);
-          setSelectionStartPoint(prev => {
-            return { x: e.clientX , y: e.clientY  };
-          });
-          return;
+        } else {
+          setSelectionBoxType(type);
+          setSelectionStartPoint({ x: worldX, y: worldY });
+          return; // Maintain selection and handle the interaction
         }
       }
 
       let i = history.length - 1;
       let flag = false;
 
-
       while (i >= 0) {
-        if (history[i].contains(targetPoint.x, targetPoint.y)) {
-
+        if (history[i].contains(worldX, worldY)) {
           setSelectedObjectIndex(i);
-          setSelectionStartPoint(prev => targetPoint);
+          setSelectionStartPoint({ x: worldX, y: worldY });
 
-          let pts = history[i].getSelectionBox()
+          let pts = history[i].getSelectionBox();
           let _selectionBox = new SelectionBox(pts.point1, pts.point2);
-
-          setSelectionBox(prev => _selectionBox);
+          setSelectionBox(_selectionBox);
 
           flag = true;
           break;
@@ -124,83 +121,85 @@ const RoughCanvas = () => {
         i--;
       }
 
-      if (flag) {
-        document.body.style.cursor = "move";
-        return;
-      }
-      else {
-        document.body.style.cursor = "default";
+      if (!flag) {
         setSelectionBox(null);
         setSelectedObjectIndex(null);
+        setSelectionStartPoint(null);
       }
-
     }
-
     else {
-      const { offsetX, offsetY } = e.nativeEvent;
-      startDrawing(
-        (offsetX - transform.x) / transform.scale,
-        (offsetY - transform.y) / transform.scale
-      );
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const worldX = (e.clientX - rect.left - transform.x) / transform.scale;
+      const worldY = (e.clientY - rect.top - transform.y) / transform.scale;
+      startDrawing(worldX, worldY);
     }
   };
   const handleMouseMove = (e: React.MouseEvent) => {
     if (mode === "pan" && isPanning.current) {
-
       const dx = e.clientX - panStart.current.x;
       const dy = e.clientY - panStart.current.y;
       panStart.current = { x: e.clientX, y: e.clientY };
       setTransform((t) => ({ ...t, x: t.x + dx, y: t.y + dy }));
     }
     else if (mode === "pointer") {
-      // check if cursor is in a shape 
-      const x = e.clientX - transform.x;
-      const y = e.clientY - transform.y;
-
-
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const worldX = (e.clientX - rect.left - transform.x) / transform.scale;
+      const worldY = (e.clientY - rect.top - transform.y) / transform.scale;
 
       if (selectionBox) {
-
-        if (selectionBoxType == "inside") {
-
+        if (selectionBoxType === "inside") {
+          const dx = worldX - selectionStartPoint.x;
+          const dy = worldY - selectionStartPoint.y;
+          
           setHistory((prev) => {
             let newHistory = [...prev];
-            newHistory[selectedObjectIndex].move(selectionStartPoint.x, selectionStartPoint.y, x, y);
+            newHistory[selectedObjectIndex].move(selectionStartPoint.x, selectionStartPoint.y, worldX, worldY);
             return newHistory;
-          })
-          
-          setSelectionStartPoint(prev => {
-            return { x: e.clientX, y: e.clientY };
           });
+
+          const shape = history[selectedObjectIndex];
+          const pts = shape.getSelectionBox();
+          selectionBox.updatePoints(pts.point1, pts.point2);
+          
+          setSelectionStartPoint({ x: worldX, y: worldY });
+        } 
+        else if (selectionBoxType && selectionBoxType !== "outside") {
+          setHistory((prev) => {
+            let newHistory = [...prev];
+            const shape = newHistory[selectedObjectIndex];
+            shape.resize(selectionBoxType, selectionStartPoint.x, selectionStartPoint.y, worldX, worldY);
+            return newHistory;
+          });
+          
+          const shape = history[selectedObjectIndex];
+          const pts = shape.getSelectionBox();
+          selectionBox.updatePoints(pts.point1, pts.point2);
+          
+          setSelectionStartPoint({ x: worldX, y: worldY });
         }
-        return
+        return;
       }
 
       let flag = false;
-
       history.forEach((shape) => {
-
-        if (shape.contains(x, y)) {
+        if (shape.contains(worldX, worldY)) {
           flag = true;
         }
-      })
+      });
 
       if (flag) {
         document.body.style.cursor = "move";
         return;
-      }
-      else {
+      } else {
         document.body.style.cursor = "default";
       }
     }
-
     else {
       if (e.buttons !== 1) return;
-      const { offsetX, offsetY } = e.nativeEvent;
-      draw(
-        (offsetX - transform.x) / transform.scale,
-        (offsetY - transform.y) / transform.scale
-      );
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const worldX = (e.clientX - rect.left - transform.x) / transform.scale;
+      const worldY = (e.clientY - rect.top - transform.y) / transform.scale;
+      draw(worldX, worldY);
     }
   };
   const handleMouseUp = (e: React.MouseEvent) => {

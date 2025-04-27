@@ -5,24 +5,38 @@ class SelectionBox {
 
     private point1: Point;
     private point2: Point;
-    private handles: Array<Point & { cursor: string,type: string }>;
+    private handles: Array<Point & { cursor: string, type: string }> = [];
 
     constructor(point1: Point, point2: Point) {
         this.point1 = point1;
         this.point2 = point2;
+        this.updateHandles();
+    }
+
+    private updateHandles() {
         this.handles = [
-            { x: point1.x, y: point1.y, cursor: "nwse-resize",type: "top-left" }, // Top-left
-            { x: point2.x, y: point1.y, cursor: "nesw-resize",type: "top-right" }, // Top-right
-            { x: point1.x, y: point2.y, cursor: "nesw-resize",type: "bottom-left" }, // Bottom-left
-            { x: point2.x, y: point2.y, cursor: "nwse-resize",type: "bottom-right" }  // Bottom-right
+            { x: this.point1.x, y: this.point1.y, cursor: "nwse-resize", type: "top-left" },
+            { x: (this.point1.x + this.point2.x) / 2, y: this.point1.y, cursor: "ns-resize", type: "top" },
+            { x: this.point2.x, y: this.point1.y, cursor: "nesw-resize", type: "top-right" },
+            { x: this.point1.x, y: (this.point1.y + this.point2.y) / 2, cursor: "ew-resize", type: "left" },
+            { x: this.point2.x, y: (this.point1.y + this.point2.y) / 2, cursor: "ew-resize", type: "right" },
+            { x: this.point1.x, y: this.point2.y, cursor: "nesw-resize", type: "bottom-left" },
+            { x: (this.point1.x + this.point2.x) / 2, y: this.point2.y, cursor: "ns-resize", type: "bottom" },
+            { x: this.point2.x, y: this.point2.y, cursor: "nwse-resize", type: "bottom-right" }
         ];
     }
 
-    draw(roughCanvas: any) {
+    updatePoints(point1: Point, point2: Point) {
+        this.point1 = point1;
+        this.point2 = point2;
+        this.updateHandles();
+    }
 
+    draw(roughCanvas: any) {
         const width = this.point2.x - this.point1.x;
         const height = this.point2.y - this.point1.y;
 
+        // Draw selection box
         roughCanvas.draw(
             roughCanvas.generator.rectangle(this.point1.x, this.point1.y, width, height, {
                 stroke: "rgba(0, 0, 0, 0.5)",
@@ -38,6 +52,7 @@ class SelectionBox {
         const handleSize = 6;
         const halfHandle = handleSize / 2;
 
+        // Draw handles
         this.handles.forEach(handle => {
             roughCanvas.draw(
                 roughCanvas.generator.rectangle(
@@ -57,10 +72,23 @@ class SelectionBox {
     }
 
     mouseOverHandle(clientX: number, clientY: number) {
-
-        const handleSize = 6;
+        const handleSize = 8; // Slightly larger for better usability
         const halfHandle = handleSize / 2;
+        const edgeMargin = 6; // Margin for edge detection
 
+        // Check if mouse is within the selection box bounds
+        const isInsideBox = 
+            clientX >= this.point1.x - edgeMargin &&
+            clientX <= this.point2.x + edgeMargin &&
+            clientY >= this.point1.y - edgeMargin &&
+            clientY <= this.point2.y + edgeMargin;
+
+        if (!isInsideBox) {
+            document.body.style.cursor = "default";
+            return "outside";
+        }
+
+        // Check handles first
         for (const handle of this.handles) {
             if (
                 clientX >= handle.x - halfHandle &&
@@ -73,39 +101,48 @@ class SelectionBox {
             }
         }
 
-        // 2. If not on a handle, check if the mouse is within the rectangle
-        if (
-            clientX >= this.point1.x &&
-            clientX <= this.point2.x &&
-            clientY >= this.point1.y &&
-            clientY <= this.point2.y
-        ) {
-            const margin = 5; // margin in pixels for edge detection
+        // Check edges with a slightly larger hit area
+        const nearLeft = Math.abs(clientX - this.point1.x) < edgeMargin;
+        const nearRight = Math.abs(clientX - this.point2.x) < edgeMargin;
+        const nearTop = Math.abs(clientY - this.point1.y) < edgeMargin;
+        const nearBottom = Math.abs(clientY - this.point2.y) < edgeMargin;
 
-            // Determine if near any edge by checking against a margin.
-            const nearLeft = Math.abs(clientX - this.point1.x) < margin;
-            const nearRight = Math.abs(clientX - this.point2.x) < margin;
-            const nearTop = Math.abs(clientY - this.point1.y) < margin;
-            const nearBottom = Math.abs(clientY - this.point2.y) < margin;
-
-            // If near two edges, choose a diagonal resize cursor.
-            if (nearLeft || nearRight) {
-                document.body.style.cursor = "ew-resize";
-                return nearLeft ? "left" : "right";
-            } else if (nearTop || nearBottom) {
-                document.body.style.cursor = "ns-resize";
-                return nearTop ? "top" : "bottom";
-            } else {
-                // Otherwise, if the mouse is inside but not near an edge, set move cursor.
-                document.body.style.cursor = "move";
-                return "inside";
-            }
-
-        } else {
-            // If outside the rectangle, revert to default cursor.
-            document.body.style.cursor = "default";
-            return "outside";
+        if (nearLeft && nearTop) {
+            document.body.style.cursor = "nwse-resize";
+            return "top-left";
         }
+        if (nearRight && nearTop) {
+            document.body.style.cursor = "nesw-resize";
+            return "top-right";
+        }
+        if (nearLeft && nearBottom) {
+            document.body.style.cursor = "nesw-resize";
+            return "bottom-left";
+        }
+        if (nearRight && nearBottom) {
+            document.body.style.cursor = "nwse-resize";
+            return "bottom-right";
+        }
+        if (nearLeft) {
+            document.body.style.cursor = "ew-resize";
+            return "left";
+        }
+        if (nearRight) {
+            document.body.style.cursor = "ew-resize";
+            return "right";
+        }
+        if (nearTop) {
+            document.body.style.cursor = "ns-resize";
+            return "top";
+        }
+        if (nearBottom) {
+            document.body.style.cursor = "ns-resize";
+            return "bottom";
+        }
+
+        // If inside the box but not near any edges
+        document.body.style.cursor = "move";
+        return "inside";
     }
 }
 

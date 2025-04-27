@@ -3,10 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DrawingProvider } from "@/context/DrawingContext";
 import Navbar from "@/components/Navbar"; // Fixed case issue
-import { FillColorSelection, StrokeColorSelection } from "@/components/ColorSelection";
-import { StrokeStyleSection, StrokeWidthSelection } from "@/components/StrokeSelection";
-import { OpacitySection } from "@/components/Opacity";
 import ZoomSelection from "@/components/ZoomSelection";
+import SelectionWindow from "@/components/SelectionWindow";
+import UndoRedo from "@/components/UndoRedo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,33 +29,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} >
         <DrawingProvider>
           <Navbar />
-          <div className="fixed left-10 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-md shadow-lg rounded-lg px-6 py-3 flex space-x-4 z-50">
-            <div className="flex flex-col gap-2 w-52">
-              <div>Stroke</div>
-              <StrokeColorSelection />
-              <div>Background</div>
-              <FillColorSelection />
-              <div>Stroke Width</div>
-              <StrokeWidthSelection/>
-              <div>Stroke Style</div>
-              <StrokeStyleSection />
-              <div>Opacity</div>
-              <OpacitySection />
+          <SelectionWindow />
+          {children}
+          <div className="fixed bottom-4 left-10 flex gap-4">
+            <div className="backdrop-blur-md bg-violet-100 shadow-lg rounded-lg px-4 py-2 z-50">
+              <ZoomSelection />
+            </div>
+            <div className="backdrop-blur-md bg-violet-100 shadow-lg rounded-lg px-4 py-2 z-50">
+              <UndoRedo />
             </div>
           </div>
-          {/* Main content */}
-          {children}
-          <div className="fixed bottom-4 left-10 backdrop-blur-md bg-violet-100 shadow-lg rounded-lg px-4 py-2 z-50">
-          <ZoomSelection />
-            </div>
-
-        </DrawingProvider>      
-        </body>
+        </DrawingProvider>
+      </body>
     </html>
   );
 }

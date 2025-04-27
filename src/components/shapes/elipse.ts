@@ -53,21 +53,92 @@ class Elipse {
     }
     getSelectionBox(){
       let padding = 5;
+      const bounds = this.getBounds();
       
       return {
         point1: {
-          x: this.x - padding,
-          y: this.y - padding,
+          x: bounds.left - padding,
+          y: bounds.top - padding,
         },
         point2: {
-          x: this.x + this.width + padding,
-          y: this.y + this.height + padding,
+          x: bounds.right + padding,
+          y: bounds.bottom + padding,
         },
       }
-       
     }
 
-}   
+    move(startX: number, startY: number, endX: number, endY: number) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+        this.x += dx;
+        this.y += dy;
+    }
 
+    resize(handleType: string, startX: number, startY: number, endX: number, endY: number) {
+        const bounds = this.getBounds();
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        switch(handleType) {
+            case "top-left":
+                this.x = endX;
+                this.y = endY;
+                this.width = bounds.right - endX;
+                this.height = bounds.bottom - endY;
+                break;
+            case "top-right":
+                this.y = endY;
+                this.width = endX - bounds.left;
+                this.height = bounds.bottom - endY;
+                break;
+            case "bottom-left":
+                this.x = endX;
+                this.width = bounds.right - endX;
+                this.height = endY - bounds.top;
+                break;
+            case "bottom-right":
+                this.width = endX - bounds.left;
+                this.height = endY - bounds.top;
+                break;
+            case "left":
+                this.x = endX;
+                this.width = bounds.right - endX;
+                break;
+            case "right":
+                this.width = endX - bounds.left;
+                break;
+            case "top":
+                this.y = endY;
+                this.height = bounds.bottom - endY;
+                break;
+            case "bottom":
+                this.height = endY - bounds.top;
+                break;
+        }
+
+        // Ensure width and height are positive
+        if (this.width < 0) {
+            this.x += this.width;
+            this.width = Math.abs(this.width);
+        }
+        if (this.height < 0) {
+            this.y += this.height;
+            this.height = Math.abs(this.height);
+        }
+    }
+
+    containsPoint(x: number, y: number): boolean {
+        // Calculate the center of the ellipse
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+        
+        // Calculate the distance from the point to the center
+        const dx = (x - centerX) / (this.width / 2);
+        const dy = (y - centerY) / (this.height / 2);
+        
+        // Check if the point is inside the ellipse
+        return dx * dx + dy * dy <= 1;
+    }
+}   
 
 export default Elipse;

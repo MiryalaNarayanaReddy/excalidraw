@@ -1,5 +1,3 @@
-
-
 //@ts-ignore
 function crossProduct(a, b) {
     return {x: a.x * b.y - a.y * b.x, y: a.y * b.x - a.x * b.y};
@@ -78,20 +76,89 @@ class Line {
 
     getSelectionBox(){
       let padding = 5;
+      const bounds = this.getBounds();
       
       return {
         point1: {
-          x: Math.min(this.point1.x, this.point2.x) - padding,
-          y: Math.min(this.point1.y, this.point2.y) - padding,
+          x: bounds.left - padding,
+          y: bounds.top - padding,
         },
         point2: {
-          x: Math.max(this.point1.x, this.point2.x) + padding,
-          y: Math.max(this.point1.y, this.point2.y) + padding,
+          x: bounds.right + padding,
+          y: bounds.bottom + padding,
         },
       }
-       
     }
 
+    move(startX: number, startY: number, endX: number, endY: number) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+        this.point1.x += dx;
+        this.point1.y += dy;
+        this.point2.x += dx;
+        this.point2.y += dy;
+    }
+
+    resize(handleType: string, startX: number, startY: number, endX: number, endY: number) {
+        switch(handleType) {
+            case "top-left":
+                this.point1.x = endX;
+                this.point1.y = endY;
+                break;
+            case "top-right":
+                this.point2.x = endX;
+                this.point1.y = endY;
+                break;
+            case "bottom-left":
+                this.point1.x = endX;
+                this.point2.y = endY;
+                break;
+            case "bottom-right":
+                this.point2.x = endX;
+                this.point2.y = endY;
+                break;
+            case "left":
+                this.point1.x = endX;
+                break;
+            case "right":
+                this.point2.x = endX;
+                break;
+            case "top":
+                this.point1.y = endY;
+                break;
+            case "bottom":
+                this.point2.y = endY;
+                break;
+        }
+    }
+
+    isNearPoint(x: number, y: number, threshold: number = 5): boolean {
+        // Calculate the distance from the point to the line
+        const dx = this.point2.x - this.point1.x;
+        const dy = this.point2.y - this.point1.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        
+        if (length === 0) {
+            // If the line is a point, check if the point is within the threshold
+            return Math.sqrt((x - this.point1.x) ** 2 + (y - this.point1.y) ** 2) <= threshold;
+        }
+        
+        // Calculate the projection of the point onto the line
+        const t = ((x - this.point1.x) * dx + (y - this.point1.y) * dy) / (length * length);
+        
+        if (t < 0) {
+            // Point is before the start of the line
+            return Math.sqrt((x - this.point1.x) ** 2 + (y - this.point1.y) ** 2) <= threshold;
+        } else if (t > 1) {
+            // Point is after the end of the line
+            return Math.sqrt((x - this.point2.x) ** 2 + (y - this.point2.y) ** 2) <= threshold;
+        } else {
+            // Point is along the line
+            const projectionX = this.point1.x + t * dx;
+            const projectionY = this.point1.y + t * dy;
+            return Math.sqrt((x - projectionX) ** 2 + (y - projectionY) ** 2) <= threshold;
+        }
+    }
 }
 
-export  default Line;
+export default Line;
